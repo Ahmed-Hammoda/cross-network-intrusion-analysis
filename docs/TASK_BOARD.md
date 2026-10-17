@@ -36,7 +36,6 @@ Update the status in your own rows when you finish a task, and commit with a mes
 | GitHub repository and documentation | Ahmed Hamouda | ✅ Done |
 | Clone the repo and `pip install -r requirements.txt` | Cyrine Chabbar | ⬜ To do |
 | Clone the repo and `pip install -r requirements.txt` | Yassine Mtibaa | ✅ Done |
-| Download own datasets into `data/raw/` | All | ⬜ To do |
 
 ---
 

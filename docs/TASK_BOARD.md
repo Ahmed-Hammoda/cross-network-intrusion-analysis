@@ -49,7 +49,7 @@ Written in [`phase1_business_understanding.md`](phase1_business_understanding.md
 | 1.2 | Define the problem | Ahmed Hamouda | ✅ Done |
 | 1.3 | Research questions | Ahmed Hamouda | ✅ Done |
 | 1.4 | Success criteria | Ahmed Hamouda | ✅ Done |
-| 1.5 | Review and approve phase 1 | Cyrine Chabbar, Yassine Mtibaa | ⬜ To do |
+| 1.5 | Review and approve phase 1 | Cyrine Chabbar, Yassine Mtibaa | ✅ Done |
 
 ## Phase 2 — Data understanding: exploration and quality assessment (Sat)
 

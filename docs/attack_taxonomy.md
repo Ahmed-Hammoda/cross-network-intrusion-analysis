@@ -26,7 +26,7 @@ label level keeps the detail for future modelling.
 | | **Total** | **54** | | |
 
 Families with labels in several datasets (Denial of service, Reconnaissance, Credential attacks,
-Web and injection, Malware and botnets) are the ones used to compare networks (SQ3).
+Web and injection, Malware and botnets) are the ones used to compare networks (SQ2).
 
 ---
 

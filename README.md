@@ -1,6 +1,6 @@
 # Cross-Network Intrusion Analysis (CRISP-DM)
 
-Data Science midterm project — MEDTECH, Computer System Engineering.
+Data Science project — MEDTECH, Computer System Engineering.
 
 We merge four NetFlow v3 intrusion-detection datasets that share the same 53 features into one
 unified dataset, analyse CICIoT2023 alongside it, and map every attack to one shared taxonomy of
@@ -9,11 +9,6 @@ unified dataset, analyse CICIoT2023 alongside it, and map every attack to one sh
 **Main research question:** how can traffic collected from different network environments be used
 to detect cyberattacks and identify their type reliably, including on networks the detection model
 has never seen? Sub-questions in [Phase 1](docs/phase1_business_understanding.md).
-
-| Part | When | Scope |
-|---|---|---|
-| Midterm | This week | CRISP-DM phases 1–5: business understanding → feature engineering |
-| Final | Next week | Modelling and evaluation: attack detection and family classification, tested on an unseen network |
 
 ## Team
 

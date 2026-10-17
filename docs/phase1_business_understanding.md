@@ -1,10 +1,5 @@
 # Phase 1 — Business understanding
 
-> Owner: Ahmed Hamouda · Status: ✅ Done · To be reviewed by Cyrine Chabbar and Yassine Mtibaa
->
-> This phase describes the **whole project**: the midterm (data preparation and analysis, CRISP-DM
-> phases 1–5) and the final part (building and evaluating a detection model).
-
 ## 1.1 Project context
 
 Every organisation connected to the internet is a target. Its network is constantly probed by
@@ -31,23 +26,25 @@ usually cannot collect and label its own attack data before deploying a detector
 > the security team **what kind** of attack is happening, and stays reliable when it is used on a
 > **different type of network** from the one it was trained on.
 
-Today, most detection models are built and tested on a single network, so their real-world
-reliability on other networks is unknown. Deploying such a model can give organisations a false
-sense of security.
+Most detection models are built and tested on a single network, so their real-world reliability on
+other networks is unknown. Deploying such a model can give organisations a false sense of security.
 
-## 1.3 Problem definition (data science problem)
+## 1.3 Problem definition
 
-We translate the business problem into a data science project in two parts:
+We translate the business problem into a data science problem:
 
-| Part | When | CRISP-DM phases | What we do |
-|---|---|---|---|
-| **Midterm** | This week | 1–5: business understanding → feature engineering | Combine traffic from several networks into one consistent dataset, organise all attacks into one taxonomy, analyse which traffic characteristics reveal each attack family and whether they hold across networks, and prepare the features for modelling |
-| **Final** | Next week | Modelling and evaluation | Train classification models that detect attacks and identify their family, and test them on a network they were not trained on |
+1. **Integrate** traffic recorded on five different networks — an office network, a lab network, an
+   industrial IoT network, an IoT botnet network and a network of real IoT devices — into consistent,
+   analysis-ready data.
+2. **Organise** all 54 attack types found in these sources into one shared taxonomy of 9 attack
+   families.
+3. **Analyse** which traffic characteristics reveal each attack family, and whether they hold from
+   one network to another.
+4. **Build and evaluate** a supervised classification model at two levels:
+   - **binary** — is this traffic normal or an attack?
+   - **multi-class** — which attack family does it belong to?
 
-The modelling task is a **supervised classification problem** at two levels:
-
-- **binary** — is this traffic normal or an attack?
-- **multi-class** — which of the 9 attack families does it belong to?
+   and measure its performance on a network it was not trained on.
 
 ## 1.4 Research questions
 
@@ -58,18 +55,14 @@ The modelling task is a **supervised classification problem** at two levels:
 
 ### Sub-questions
 
-| | Sub-question | Answered in |
-|---|---|---|
-| **SQ1** | Which traffic characteristics best distinguish normal traffic from attack traffic, and how do they vary across attack families? | Midterm — EDA, hypothesis tests |
-| **SQ2** | To what extent do the different attack families differ from each other in their traffic behaviour? | Midterm — EDA, hypothesis tests |
-| **SQ3** | How consistent is the traffic behaviour of the same attack type across different network environments? | Midterm — cross-network tests |
-| **SQ4** | How are the attack types distributed, and which ones are too rare to be detected reliably without special handling? | Midterm — class distribution analysis |
-| **SQ5** | How accurately can a model detect attacks and identify their family when trained on traffic from several networks? | Final — modelling and evaluation |
-| **SQ6** | How much does detection performance change when the model is applied to a network it was not trained on, and which attack families are affected most? | Final — cross-network evaluation |
+| | Sub-question |
+|---|---|
+| **SQ1** | Which traffic characteristics best distinguish normal traffic from attack traffic, and how do they differ across attack families? |
+| **SQ2** | How consistent is the traffic behaviour of the same attack type across different network environments? |
+| **SQ3** | How accurately can a model detect attacks and identify their family, and how much does its performance change on a network it was not trained on? |
 
-SQ1–SQ4 build the understanding that SQ5 and SQ6 rely on: the midterm shows *what* separates
-attacks and *whether* it transfers between networks; the final part measures *how well* a model can
-use it.
+SQ1 identifies *what* reveals an attack, SQ2 tests *whether* it transfers between networks, and SQ3
+measures *how well* a model can use it — together they answer the main question.
 
 ## 1.5 Success criteria
 

@@ -35,7 +35,7 @@ Update the status in your own rows when you finish a task, and commit with a mes
 | Shared contract `src/config.py` | Ahmed Hamouda | ✅ Done |
 | GitHub repository and documentation | Ahmed Hamouda | ✅ Done |
 | Clone the repo and `pip install -r requirements.txt` | Cyrine Chabbar | ⬜ To do |
-| Clone the repo and `pip install -r requirements.txt` | Yassine Mtibaa | ⬜ To do |
+| Clone the repo and `pip install -r requirements.txt` | Yassine Mtibaa | ✅ Done |
 | Download own datasets into `data/raw/` | All | ⬜ To do |
 
 ---
@@ -58,17 +58,17 @@ Written in [`phase2_data_understanding.md`](phase2_data_understanding.md), one s
 
 | # | Task | UNSW | CIC18 | ToN | BoT | IoT23 |
 |---|---|---|---|---|---|---|
-| 2.1 | Describe rows and columns (check against official counts) | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 2.2 | Data types and units | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 2.3 | What are the problems (NaN, inf, duplicates, constant columns, label spellings, imbalance) | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 2.4 | Solution for each problem (without code) | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 2.1 | Describe rows and columns (check against official counts) | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
+| 2.2 | Data types and units | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
+| 2.3 | What are the problems (NaN, inf, duplicates, constant columns, label spellings, imbalance) | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
+| 2.4 | Solution for each problem (without code) | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
 | | **Owner** | Ahmed | Ahmed | Cyrine | Cyrine | Yassine |
 
 | # | Shared task | Owner | Status |
 |---|---|---|---|
 | 2.5 | NetFlow v3 feature dictionary (53 features: name, meaning, unit, type) | Ahmed Hamouda | ⬜ To do |
 | 2.6 | Dataset comparison table and class-distribution plots | Cyrine Chabbar | ⬜ To do |
-| 2.7 | CICIoT2023 feature dictionary (45 features) | Yassine Mtibaa | ⬜ To do |
+| 2.7 | CICIoT2023 feature dictionary (39 features + label, see [ciciot_feature_dictionary.md](ciciot_feature_dictionary.md)) | Yassine Mtibaa | ✅ Done |
 
 ## Phase 3 — Data preprocessing (Sun)
 
@@ -83,7 +83,7 @@ Written in [`phase2_data_understanding.md`](phase2_data_understanding.md), one s
 |---|---|---|---|
 | 3.4 | Merge the 4 NetFlow files and run the post-merge checks | Ahmed Hamouda | ⬜ To do |
 | 3.5 | Explain merging / integration decisions | Ahmed Hamouda | ⬜ To do |
-| 3.6 | Explain why CICIoT2023 is kept separate | Yassine Mtibaa | ⬜ To do |
+| 3.6 | Explain why CICIoT2023 is kept separate | Yassine Mtibaa | 🔄 In progress |
 | 3.7 | Log every decision in [`decision_log.md`](decision_log.md) | All | ⬜ To do |
 
 ## Phase 4 — Exploratory data analysis (Mon)

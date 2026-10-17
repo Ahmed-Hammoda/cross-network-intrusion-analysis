@@ -13,8 +13,8 @@ so it is analysed separately and linked to the others through the shared attack 
 | `CIC18` | NF-CSE-CIC-IDS2018-v3 | Enterprise / office network | 20,115,529 | 12.93% | 6 | 53 | Ahmed Hamouda |
 | `ToN` | NF-ToN-IoT-v3 | IoT / industrial network | 27,520,260 | 38.98% | 9 | 53 | Cyrine Chabbar |
 | `BoT` | NF-BoT-IoT-v3 | IoT botnet network | 16,993,808 | 99.7% | 4 | 53 | Cyrine Chabbar |
-| `IoT23` | CICIoT2023 | Real IoT devices (105) | ~47 million | — | 33 | 45 | Yassine Mtibaa |
-| | **Total** | | **~114 million** | | **54 labels** | | |
+| `IoT23` | CICIoT2023 | Real IoT devices (105) | 45,019,243 (packet windows) | 97.66% | 33 | 39 | Yassine Mtibaa |
+| | **Total** | | **~112 million** | | **54 labels** | | |
 
 ---
 
@@ -86,11 +86,14 @@ used different feature tools and could not be merged directly.
 |---|---|
 | Source | Canadian Institute for Cybersecurity, University of New Brunswick, 2023 |
 | How it was made | 33 attacks run in an IoT topology of 105 real devices, where the attackers are themselves compromised IoT devices |
-| Size | Almost 47 million records, split across many CSV files |
+| Size | 45,019,243 rows in 63 files (`MERGED_CSV/Merged01–63.csv`, 9.3 GB). The original 2023 release had ~46.7 M rows in 169 files; we use the newer merged release |
+| Row unit | One **window of up to 100 packets** (not one flow); features are averages, shares (0–1), counts or size statistics over the window |
+| Features | 39 + `Label` (feature dictionary: `ciciot_feature_dictionary.md`) |
 | Attack classes | 33 specific attacks in 7 categories: DDoS, DoS, Recon, Web-based, Brute Force, Spoofing, Mirai |
 | Why we use it | Newest dataset; real devices; the only source of Spoofing and Mirai; labels at the specific-technique level |
-| Why it is not merged | Different extraction tool and 45 different features, measured differently from NetFlow — merging would mix incompatible measurements |
-| Download | https://www.unb.ca/cic/datasets/iotdataset-2023.html (CSV folder, not the PCAPs) |
+| Why it is not merged | Different extraction tool and 39 different features measured over packet windows, not flows — merging would mix incompatible measurements |
+| Known issues | ≈ 51 % exact duplicate rows; ≈ 13.3 M rows whose features carry two labels (DoS vs DDoS); benign only 2.3 %; 8 redundant and 8 near-constant columns; 991 infinite `Rate` values; 7 truncated lines (details in `phase2_data_understanding.md`) |
+| Download | https://www.unb.ca/cic/datasets/iotdataset-2023.html — download **`MERGED_CSV` only** (the `CSV/` folder holds the same data again) and put the files in `data/raw/CICIoT2023/` |
 | Citation | Neto, E.C.P. et al. (2023). *CICIoT2023: A Real-Time Dataset and Benchmark for Large-Scale Attacks in IoT Environment*. Sensors 23(13), 5941. |
 
 ---

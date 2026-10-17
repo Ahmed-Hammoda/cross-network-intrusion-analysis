@@ -1,6 +1,6 @@
 # Phase 1 — Business understanding
 
-> Draft — Member 1. Status: 🔄 In progress. Team review before Sunday.
+> Draft — Ahmed Hamouda. Status: 🔄 In progress. Team review before Sunday.
 
 ## 1.1 Project context
 

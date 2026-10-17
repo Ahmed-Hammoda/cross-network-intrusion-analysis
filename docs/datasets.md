@@ -9,11 +9,11 @@ so it is analysed separately and linked to the others through the shared attack 
 
 | Key | Dataset | Network environment | Flows | Attack share | Attack classes | Features | Owner |
 |---|---|---|---|---|---|---|---|
-| `UNSW` | NF-UNSW-NB15-v3 | Mixed lab network | 2,365,424 | 5.4% | 9 | 53 | Member 1 |
-| `CIC18` | NF-CSE-CIC-IDS2018-v3 | Enterprise / office network | 20,115,529 | 12.93% | 6 | 53 | Member 1 |
-| `ToN` | NF-ToN-IoT-v3 | IoT / industrial network | 27,520,260 | 38.98% | 9 | 53 | Member 2 |
-| `BoT` | NF-BoT-IoT-v3 | IoT botnet network | 16,993,808 | 99.7% | 4 | 53 | Member 2 |
-| `IoT23` | CICIoT2023 | Real IoT devices (105) | ~47 million | — | 33 | 45 | Member 3 |
+| `UNSW` | NF-UNSW-NB15-v3 | Mixed lab network | 2,365,424 | 5.4% | 9 | 53 | Ahmed Hamouda |
+| `CIC18` | NF-CSE-CIC-IDS2018-v3 | Enterprise / office network | 20,115,529 | 12.93% | 6 | 53 | Ahmed Hamouda |
+| `ToN` | NF-ToN-IoT-v3 | IoT / industrial network | 27,520,260 | 38.98% | 9 | 53 | Cyrine Chabbar |
+| `BoT` | NF-BoT-IoT-v3 | IoT botnet network | 16,993,808 | 99.7% | 4 | 53 | Cyrine Chabbar |
+| `IoT23` | CICIoT2023 | Real IoT devices (105) | ~47 million | — | 33 | 45 | Yassine Mtibaa |
 | | **Total** | | **~114 million** | | **54 labels** | | |
 
 ---

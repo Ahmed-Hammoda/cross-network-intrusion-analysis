@@ -1,17 +1,28 @@
 # Team plan
 
-Tasks, days and status are tracked in the [task board](TASK_BOARD.md).
+Tasks, days and status are tracked in the [task board](TASK_BOARD.md). What each notebook must
+contain is in [`notebooks/README.md`](../notebooks/README.md).
 
 ## Ownership
 
 | Member | Datasets | Notebooks | Also responsible for |
 |---|---|---|---|
-| Member 1 | NF-UNSW-NB15-v3, NF-CSE-CIC-IDS2018-v3 | `01_unsw`, `02_cic18`, `06_merge_netflow` | Phase 1, NetFlow feature dictionary, final merge |
-| Member 2 | NF-ToN-IoT-v3, NF-BoT-IoT-v3 | `03_ton`, `04_bot` | Dataset comparison table, class-balance plots |
-| Member 3 | CICIoT2023 | `05_ciciot2023` | CICIoT2023 feature dictionary, "why not merged" section |
+| Ahmed Hamouda | NF-UNSW-NB15-v3, NF-CSE-CIC-IDS2018-v3 | `01_unsw`, `02_cic18`, `06_merge_netflow` | Phase 1, NetFlow feature dictionary, final merge |
+| Cyrine Chabbar | NF-ToN-IoT-v3, NF-BoT-IoT-v3 | `03_ton`, `04_bot` | Dataset comparison table, class-distribution plots |
+| Yassine Mtibaa | CICIoT2023 | `05_ciciot2023` | CICIoT2023 feature dictionary, "why not merged" section |
 
 `07_eda` and `08_feature_engineering` are shared: each member works in the sections assigned to
 them on the task board.
+
+## Schedule
+
+| Day | Phase |
+|---|---|
+| Sat | 1. Business understanding · 2. Data understanding |
+| Sun | 3. Data preprocessing |
+| Mon | 4. Exploratory data analysis |
+| Tue | 5. Feature engineering |
+| Wed | 6. Presentation · 7. Report |
 
 ## Why there are no dependencies between members
 

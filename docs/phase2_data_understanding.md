@@ -11,7 +11,7 @@ See `datasets.md` (provenance, collection method, citation, download link for ea
 
 Copy this block for each dataset.
 
-### `<KEY>` — `<dataset name>` (owner: Member X)
+### `<KEY>` — `<dataset name>` (owner: <member name>)
 
 **Dimensions**
 
@@ -41,11 +41,11 @@ Copy this block for each dataset.
 |---|---|---|---|---|
 | 1 | | | | |
 
-## 2.3 Cross-dataset comparison (Member 2)
+## 2.3 Cross-dataset comparison (Cyrine Chabbar)
 
 Table comparing the five datasets: rows, features, attack share, number of labels, network type.
 
 ## 2.4 Feature dictionaries
 
-- NetFlow v3 — 53 features (Member 1): `netflow_feature_dictionary.md`
-- CICIoT2023 — 45 features (Member 3): `ciciot_feature_dictionary.md`
+- NetFlow v3 — 53 features (Ahmed Hamouda): `netflow_feature_dictionary.md`
+- CICIoT2023 — 45 features (Yassine Mtibaa): `ciciot_feature_dictionary.md`

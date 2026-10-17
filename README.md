@@ -10,6 +10,28 @@ CRISP-DM from business understanding to feature engineering (no model training i
 **Main question:** which traffic characteristics distinguish attacks from normal traffic — and do
 they stay the same from one network to another?
 
+## Team
+
+| Member | Responsible for |
+|---|---|
+| Ahmed Hamouda | NF-UNSW-NB15-v3, NF-CSE-CIC-IDS2018-v3, NetFlow merge, phase 1 |
+| Cyrine Chabbar | NF-ToN-IoT-v3, NF-BoT-IoT-v3, dataset comparison |
+| Yassine Mtibaa | CICIoT2023 |
+
+## Phases
+
+| # | Phase | Day |
+|---|---|---|
+| 1 | Business understanding — context, problem, research questions, success criteria | Sat |
+| 2 | Data understanding — rows and columns, data types and units, problems, solutions (without code) | Sat |
+| 3 | Data preprocessing — handle every problem with code, outliers, merging / integration decisions | Sun |
+| 4 | Exploratory data analysis — descriptive statistics and plots, correlations, relationships, hypothesis tests | Mon |
+| 5 | Feature engineering — selection, extraction / creation / encoding, scaling / transformation, final feature set | Tue |
+| 6 | Presentation | Wed |
+| 7 | Report | Wed |
+
+Progress on every task is tracked in the [task board](docs/TASK_BOARD.md).
+
 ## Project documents
 
 | Document | Content |
@@ -21,16 +43,17 @@ they stay the same from one network to another?
 | [Phase 2 — Data understanding](docs/phase2_data_understanding.md) | Per-dataset description template |
 | [Decision log](docs/decision_log.md) | Every cleaning and integration decision |
 | [Team plan](docs/team_plan.md) | Who owns which datasets and notebooks |
+| [Notebook guide](notebooks/README.md) | What each member's notebooks must contain |
 
 ## Datasets
 
 | Key | Dataset | Network | Flows | Owner |
 |---|---|---|---|---|
-| `UNSW` | NF-UNSW-NB15-v3 | Mixed lab | 2,365,424 | Member 1 |
-| `CIC18` | NF-CSE-CIC-IDS2018-v3 | Enterprise / office | 20,115,529 | Member 1 |
-| `ToN` | NF-ToN-IoT-v3 | IoT / industrial | 27,520,260 | Member 2 |
-| `BoT` | NF-BoT-IoT-v3 | IoT botnet | 16,993,808 | Member 2 |
-| `IoT23` | CICIoT2023 | Real IoT devices | ~47 million | Member 3 |
+| `UNSW` | NF-UNSW-NB15-v3 | Mixed lab | 2,365,424 | Ahmed Hamouda |
+| `CIC18` | NF-CSE-CIC-IDS2018-v3 | Enterprise / office | 20,115,529 | Ahmed Hamouda |
+| `ToN` | NF-ToN-IoT-v3 | IoT / industrial | 27,520,260 | Cyrine Chabbar |
+| `BoT` | NF-BoT-IoT-v3 | IoT botnet | 16,993,808 | Cyrine Chabbar |
+| `IoT23` | CICIoT2023 | Real IoT devices | ~47 million | Yassine Mtibaa |
 
 The four NetFlow v3 datasets are merged into one. CICIoT2023 has different features, so it is
 analysed separately and linked through the shared taxonomy. Details in [datasets.md](docs/datasets.md).
@@ -47,15 +70,7 @@ the official sources and put the files in `data/raw/` with the names listed in `
 ├── src/config.py            Shared contract: paths, taxonomy, cleaning / mapping / sampling / quality functions
 ├── data/raw/                Downloaded datasets (git-ignored)
 ├── data/processed/          Cleaned, sampled Parquet files (git-ignored)
-├── notebooks/
-│   ├── 01_unsw.ipynb                 Member 1
-│   ├── 02_cic18.ipynb                Member 1
-│   ├── 03_ton.ipynb                  Member 2
-│   ├── 04_bot.ipynb                  Member 2
-│   ├── 05_ciciot2023.ipynb           Member 3
-│   ├── 06_merge_netflow.ipynb        Merge of the 4 NetFlow files
-│   ├── 07_eda.ipynb                  Phase 4
-│   └── 08_feature_engineering.ipynb  Phase 5
+├── notebooks/               Our code — see notebooks/README.md for what each member delivers
 ├── tables/                  Quality reports and summary tables (CSV)
 ├── figures/                 Plots for the report and slides
 ├── docs/                    Task board, dataset and attack descriptions, phase write-ups, decision log

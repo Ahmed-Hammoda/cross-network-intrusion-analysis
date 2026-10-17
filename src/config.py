@@ -30,11 +30,11 @@ for _d in (RAW_DIR, PROCESSED_DIR, FIG_DIR, TABLE_DIR):
 # 2. Datasets and owners
 # ---------------------------------------------------------------------------
 DATASETS = {
-    "UNSW":   {"file": "NF-UNSW-NB15-v3.csv",       "group": "netflow", "owner": "Member 1", "network": "Mixed lab"},
-    "CIC18":  {"file": "NF-CSE-CIC-IDS2018-v3.csv", "group": "netflow", "owner": "Member 1", "network": "Enterprise / office"},
-    "ToN":    {"file": "NF-ToN-IoT-v3.csv",         "group": "netflow", "owner": "Member 2", "network": "IoT / industrial"},
-    "BoT":    {"file": "NF-BoT-IoT-v3.csv",         "group": "netflow", "owner": "Member 2", "network": "IoT botnet"},
-    "IoT23":  {"file": "CICIoT2023/",               "group": "ciciot",  "owner": "Member 3", "network": "Real IoT devices"},
+    "UNSW":   {"file": "NF-UNSW-NB15-v3.csv",       "group": "netflow", "owner": "Ahmed Hamouda", "network": "Mixed lab"},
+    "CIC18":  {"file": "NF-CSE-CIC-IDS2018-v3.csv", "group": "netflow", "owner": "Ahmed Hamouda", "network": "Enterprise / office"},
+    "ToN":    {"file": "NF-ToN-IoT-v3.csv",         "group": "netflow", "owner": "Cyrine Chabbar", "network": "IoT / industrial"},
+    "BoT":    {"file": "NF-BoT-IoT-v3.csv",         "group": "netflow", "owner": "Cyrine Chabbar", "network": "IoT botnet"},
+    "IoT23":  {"file": "CICIoT2023/",               "group": "ciciot",  "owner": "Yassine Mtibaa", "network": "Real IoT devices"},
 }
 
 # ---------------------------------------------------------------------------

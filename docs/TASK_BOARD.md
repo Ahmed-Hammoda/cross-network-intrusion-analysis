@@ -105,11 +105,11 @@ Apply the solutions planned in phase 2, with before/after evidence for every ste
 | 4.4 | Interesting patterns and trends (per family, per network) | Yassine Mtibaa | ⬜ To do |
 | 4.5 | Justified hypothesis tests with interpretation: | | |
 | | · Normality check (justifies non-parametric tests) | Yassine Mtibaa | ⬜ To do |
-| | · Mann–Whitney U: benign vs attack, with effect size (RQ1) | Ahmed Hamouda | ⬜ To do |
-| | · Kruskal–Wallis + Dunn post-hoc: across families (RQ2) | Cyrine Chabbar | ⬜ To do |
-| | · Chi-square: protocol × family (RQ2) | Yassine Mtibaa | ⬜ To do |
-| | · Kolmogorov–Smirnov: same attack across networks (RQ3) | Ahmed Hamouda | ⬜ To do |
-| 4.6 | Class imbalance analysis (RQ4) | Cyrine Chabbar | ⬜ To do |
+| | · Mann–Whitney U: benign vs attack, with effect size (SQ1) | Ahmed Hamouda | ⬜ To do |
+| | · Kruskal–Wallis + Dunn post-hoc: across families (SQ2) | Cyrine Chabbar | ⬜ To do |
+| | · Chi-square: protocol × family (SQ2) | Yassine Mtibaa | ⬜ To do |
+| | · Kolmogorov–Smirnov: same attack across networks (SQ3) | Ahmed Hamouda | ⬜ To do |
+| 4.6 | Class imbalance analysis (SQ4) | Cyrine Chabbar | ⬜ To do |
 | 4.7 | CICIoT2023 EDA, compared to NetFlow at family level | Yassine Mtibaa | ⬜ To do |
 
 ## Phase 5 — Feature engineering (Tue)
@@ -144,7 +144,7 @@ fitted on the training set only (no data leakage).
 | # | Task | Owner | Status |
 |---|---|---|---|
 | 7.1 | LaTeX report on Overleaf, sections for phases 1–5 | All (each writes their part) | ⬜ To do |
-| 7.2 | Conclusions and next steps: answer RQ1–RQ4, limitations, future modelling plan | All | ⬜ To do |
+| 7.2 | Conclusions and next steps: answer the main research question and SQ1–SQ4, limitations, future modelling plan | All | ⬜ To do |
 | 7.3 | Figures and tables with captions | All | ⬜ To do |
 | 7.4 | References (datasets and papers) | Ahmed Hamouda | ⬜ To do |
 | 7.5 | Final check: the code runs cleanly from a fresh clone | Cyrine Chabbar | ⬜ To do |

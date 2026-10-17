@@ -188,7 +188,7 @@ All 34 labels map to `TAXONOMY` without changes (`map_labels` normalises the UPP
 | 6 | Infinite `Rate` (window of 0 s) | 991 rows, many classes | inf → NaN → dropped | Yes (`clean`) |
 | 7 | Negative `IAT` (impossible) | 2 rows | Set to NaN → dropped | No → decision log |
 | 8 | Exact duplicate rows | 22,976,869 rows (51.0 %), ≈ 70 % of DDoS ICMP flood | `clean()` per file, then again after concatenation | Yes (`clean`) |
-| 9 | Same features with different labels | 610,472 vectors, 13,286,035 rows (29.5 %): DoS vs DDoS of the same flood type | Keep for EDA and report (RQ2); drop before any model training | No → decision log (open) |
+| 9 | Same features with different labels | 610,472 vectors, 13,286,035 rows (29.5 %): DoS vs DDoS of the same flood type | Keep for EDA and report (SQ2); drop before any model training | No → decision log (open) |
 | 10 | UPPERCASE label spellings | 33 of 34 labels | Normalised by `map_labels` | Yes (`map_labels`) |
 | 11 | Extreme imbalance (benign 2.3 %, 5,764× ratio) | `Label` | `sample_per_label` (200k cap) | Yes (`sample_per_label`) |
 | 12 | Redundant columns: `LLC` = `IPv`, `Tot size` = `AVG`, `Variance` = `Std`², `Tot sum` = `AVG` × `Number`, `*_count` = share × `Number` | 8 columns (0 violations on complete rows) | Remove in feature selection | No → phase 5 |

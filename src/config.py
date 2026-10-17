@@ -175,10 +175,66 @@ def downcast(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def clean(df: pd.DataFrame, source: str) -> tuple[pd.DataFrame, dict]:
+def missing_report(df: pd.DataFrame) -> pd.DataFrame:
+    """Phase 2.2: missing and infinite values per column, as counts and percentages."""
+    num = df.select_dtypes(include=[np.number])
+    inf = pd.Series(np.isinf(num.to_numpy(dtype="float64", na_value=np.nan)).sum(axis=0), index=num.columns)
+    rep = pd.DataFrame({"missing": df.isna().sum(), "infinite": inf}).fillna(0).astype(int)
+    rep["missing_pct"] = (100 * rep["missing"] / len(df)).round(4)
+    rep["infinite_pct"] = (100 * rep["infinite"] / len(df)).round(4)
+    return rep[(rep["missing"] > 0) | (rep["infinite"] > 0)].sort_values("missing_pct", ascending=False)
+
+
+def validate(df: pd.DataFrame) -> pd.DataFrame:
+    """Phase 2.5 / 3: automatic logical consistency checks. Returns one row per check.
+
+    Checks only the columns that exist, so it works on every dataset.
+    """
+    checks = []
+    cols = {c.upper(): c for c in df.columns}
+
+    def add(name, mask):
+        checks.append({"check": name, "violations": int(mask.sum())})
+
+    # negative values in counts, sizes and durations
+    for c in df.select_dtypes(include=[np.number]).columns:
+        if any(k in c.upper() for k in ("BYTES", "PKTS", "PACKETS", "DURATION", "IAT", "LEN", "TTL")):
+            add(f"negative values in {c}", df[c] < 0)
+
+    # ports outside 0-65535
+    for c in df.columns:
+        if "PORT" in c.upper() and pd.api.types.is_numeric_dtype(df[c]):
+            add(f"{c} outside 0-65535", (df[c] < 0) | (df[c] > 65535))
+
+    # end time before start time
+    start = next((cols[k] for k in cols if "START" in k and "MILLI" in k), None)
+    end = next((cols[k] for k in cols if "END" in k and "MILLI" in k), None)
+    if start and end:
+        add(f"{end} before {start}", df[end] < df[start])
+
+    # packets without bytes
+    for side in ("IN", "OUT"):
+        b, p = cols.get(f"{side}_BYTES"), cols.get(f"{side}_PKTS")
+        if b and p:
+            add(f"{p} > 0 but {b} = 0", (df[p] > 0) & (df[b] == 0))
+
+    # binary label disagrees with class label
+    if "LABEL" in cols and NETFLOW_LABEL_COL in df.columns:
+        is_benign = df[NETFLOW_LABEL_COL].astype(str).str.strip().str.lower().eq("benign")
+        add("Label (0/1) disagrees with Attack", df[cols["LABEL"]].astype(int).eq(1) == is_benign)
+
+    return pd.DataFrame(checks)
+
+
+def clean(df: pd.DataFrame, source: str, impute: dict | None = None) -> tuple[pd.DataFrame, dict]:
     """Apply the shared cleaning rules and return (clean_df, stats).
 
-    Order: drop ID columns -> inf to NaN -> drop NaN rows -> drop exact duplicates.
+    Order: drop ID columns -> inf to NaN -> impute chosen columns -> drop remaining NaN rows
+    -> drop exact duplicates.
+
+    impute: optional per-column strategy decided in phase 2, e.g. {"SRC_TO_DST_SECOND_BYTES": "median",
+    "SOME_RATE": 0}. Values: "median", "mean" or a constant. Log every choice in docs/decision_log.md.
+
     No scaling or transformation here: that is feature engineering, done once on merged data.
     """
     stats = {"source_dataset": source, "rows_raw": len(df), "cols_raw": df.shape[1]}
@@ -193,6 +249,11 @@ def clean(df: pd.DataFrame, source: str) -> tuple[pd.DataFrame, dict]:
     stats["inf_values"] = n_inf
 
     stats["nan_values"] = int(df.isna().sum().sum())
+    for col, how in (impute or {}).items():
+        value = df[col].median() if how == "median" else df[col].mean() if how == "mean" else how
+        df[col] = df[col].fillna(value)
+    stats["imputed_columns"] = ", ".join(f"{c}={h}" for c, h in (impute or {}).items()) or "none"
+
     stats["rows_with_nan"] = int(df.isna().any(axis=1).sum())
     df = df.dropna()
 

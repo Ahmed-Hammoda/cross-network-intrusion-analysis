@@ -1,45 +1,127 @@
-# Phase 2 — Data understanding
+# Phase 2 — Data understanding (data exploration and quality assessment)
 
-> Template — each member fills in the section for their own datasets.
-> General dataset descriptions are in `datasets.md`; attack descriptions in `attack_taxonomy.md`.
+> Each member fills in one section per dataset they own. General dataset descriptions are in
+> [`datasets.md`](datasets.md); attack descriptions are in [`attack_taxonomy.md`](attack_taxonomy.md).
+>
+> **Phase 2 is diagnosis only:** find and measure the problems, and propose a solution for each.
+> Nothing is changed in the data until phase 3.
 
-## 2.1 Data sources
+The five checks below follow the structure of the course lab (Part 1, questions 1.1–1.5), adapted
+from customer data to network-traffic data.
 
-See `datasets.md` (provenance, collection method, citation, download link for each dataset).
+---
 
-## 2.2 Per-dataset description
+## 2.1 Initial data inspection
 
-Copy this block for each dataset.
+- Load the dataset and describe its structure (`df.shape`, `df.info()`, `df.head()`).
+- Number of rows and columns — **compare with the official numbers** in `datasets.md`.
+- Data type of each column, grouped by role:
 
-### `<KEY>` — `<dataset name>` (owner: <member name>)
+  | Group | Example columns | Expected type | Unit |
+  |---|---|---|---|
+  | Identifiers | source / destination IP | text | — |
+  | Ports and protocol | source / destination port, protocol, L7 protocol | integer codes (categorical) | — |
+  | Volume | in/out bytes, in/out packets | integer | bytes, packets |
+  | Time | flow duration, start/end timestamps, inter-arrival times | integer / float | milliseconds |
+  | TCP flags | client / server TCP flags | integer bitmask (categorical) | — |
+  | Labels | `Label` (0/1), `Attack` (class name) | integer / text | — |
 
-**Dimensions**
+- Obvious quality issues visible at first glance (odd types, columns full of zeros, strange labels).
+
+**Deliverable:** a table of dimensions (official vs loaded) and a table of columns with type and unit.
+
+## 2.2 Missing values analysis
+
+- Count missing values per column, and the **percentage** missing per column.
+- In network data, also count **infinite values** (±inf). They come from rate features divided by a
+  zero duration and behave like missing values.
+- Visualise the pattern: a bar chart of missing % per column (and a missing-value heatmap on a sample
+  if there are many).
+- For each column with missing or infinite values, propose a strategy and justify it:
+  - very few rows affected → drop those rows;
+  - many rows in one column → impute (median, or 0 when "nothing happened" is the true meaning) or drop the column;
+  - missing only in one attack class → investigate first, it may be a property of that attack.
+
+**Deliverable:** missing/inf table + plot + one planned strategy per affected column.
+
+## 2.3 Data type issues
+
+- Columns that should be **numeric** but are stored as text (`object` dtype) — e.g. numbers read
+  with stray characters.
+- Columns that should be **datetime**: the flow start/end timestamps are stored as integers in
+  milliseconds — they must be converted before any time-based analysis.
+- Columns that should be **categorical** but are stored as numbers: protocol numbers, L7 protocol
+  codes, ports and TCP-flag bitmasks are codes, not quantities — averaging them is meaningless.
+- Categorical values that are **inconsistent**: label spellings (e.g. `Infilteration` vs
+  `Infiltration`), extra spaces, different capitalisation, CICIoT2023 label formats.
+- Propose a solution for each issue.
+
+**Deliverable:** table — column → current type → correct type → planned fix.
+
+## 2.4 Outlier detection
+
+- Detect outliers in numeric columns with statistical methods: **IQR rule** (below Q1 − 1.5·IQR or
+  above Q3 + 1.5·IQR) and **z-score** (|z| > 3). Network features are very skewed, so also look at
+  them on a log scale.
+- Box plots of the key numeric variables, **split by attack family** (log scale).
+- Decide which outliers are **legitimate** and which are **errors**:
+  - legitimate — huge byte counts in DDoS, thousands of tiny flows in a scan: the outlier *is* the
+    attack, and removing it would delete the signal we want to study;
+  - errors — impossible values: negative bytes, packets or durations, end time before start time,
+    ports outside 0–65535.
+- Propose how to handle each type (keep and later transform legitimate ones; remove or correct errors).
+
+**Deliverable:** outlier counts per column (IQR and z-score), box plots, legitimate-vs-error table
+with the planned treatment.
+
+## 2.5 Data consistency check
+
+- **Duplicate records:** count exact duplicate rows, overall and per attack class.
+- **Unique identifiers:** flows have no ID column (unlike `customer_id` in the lab), so check whether
+  any record identifies a flow uniquely — e.g. source/destination IP + ports + start timestamp — and
+  report how many collisions exist.
+- **Formatting consistency:** column names (spaces, capitalisation), label spellings, and — for
+  CICIoT2023 — the same label written in different ways across files.
+- **Logical inconsistencies:** negative values in counts and durations, end time before start time,
+  packets > 0 but bytes = 0 (or the reverse), TCP flags set on non-TCP flows, timestamps outside the
+  dataset's capture period, a `Label` (0/1) that disagrees with `Attack` (Benign vs attack).
+
+`validate(df)` in `src/config.py` runs the automatic logical checks and returns a table.
+
+**Deliverable:** duplicate counts, identifier check, formatting findings, logical-check table.
+
+---
+
+## Template — copy one block per dataset
+
+### `<KEY>` — `<dataset name>` (owner: `<member name>`)
+
+**2.1 Initial inspection**
 
 | | Official | Loaded | Match? |
 |---|---|---|---|
 | Rows | | | |
 | Columns | | | |
 
-**Data types and units**
+Columns, types and units: *(table)* · First observations: *(text)*
 
-| Group | Columns | Type | Unit |
-|---|---|---|---|
-| Identifiers | | | |
-| Ports / protocol | | | |
-| Volume (bytes, packets) | | | |
-| Time (duration, timestamps, IAT) | | | |
-| TCP flags | | | |
-| Labels | | | |
+**2.2 Missing values** — *(table + plot)*
 
-**Key variables** — the 5–8 columns most relevant to our research questions, and why.
+**2.3 Data type issues** — *(table)*
 
-**Class distribution** — table of flows per `Attack` label (and figure in `figures/`).
+**2.4 Outliers** — *(table + box plots)*
 
-**Initial quality problems and planned solutions (no code)**
+**2.5 Consistency** — *(duplicates, identifier check, formatting, logical checks)*
 
-| # | Problem found | Columns / rows affected | Planned solution | Rule in `config.py`? |
+**Summary: problems found and planned solutions (no code)**
+
+| # | Problem | Columns / rows affected | Planned solution | Phase 3 step |
 |---|---|---|---|---|
 | 1 | | | | |
+
+---
+
+## Completed dataset sections
 
 ### `IoT23` — CICIoT2023 (owner: Yassine Mtibaa)
 
@@ -117,11 +199,14 @@ All 34 labels map to `TAXONOMY` without changes (`map_labels` normalises the UPP
 | 17 | Extreme outliers | `Rate` (max 1.57 × 10⁷), `IAT` (max 78,612 s), sizes | Investigate per class in phase 3; keep legitimate attack values | No → phase 3 |
 | 18 | No identifiers or timestamps; shuffled files | whole dataset | Limitation: no time- or device-based split | — |
 
-## 2.3 Cross-dataset comparison (Cyrine Chabbar)
+---
 
-Table comparing the five datasets: rows, features, attack share, number of labels, network type.
+## Cross-dataset comparison (Cyrine Chabbar)
 
-## 2.4 Feature dictionaries
+One table comparing all five datasets: rows, columns, attack share, number of attack labels,
+network type, and the number of problems found in each.
+
+## Feature dictionaries
 
 - NetFlow v3 — 53 features (Ahmed Hamouda): `netflow_feature_dictionary.md`
-- CICIoT2023 — 45 features (Yassine Mtibaa): `ciciot_feature_dictionary.md`
+- CICIoT2023 — 39 features + `Label` in the release we use (Yassine Mtibaa): `ciciot_feature_dictionary.md`

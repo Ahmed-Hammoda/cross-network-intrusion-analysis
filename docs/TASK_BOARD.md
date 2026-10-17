@@ -17,7 +17,7 @@ Update the status in your own rows when you finish a task, and commit with a mes
 
 | # | Phase | Day | Rubric points | Status |
 |---|---|---|---|---|
-| 1 | Business understanding | Sat | Report 4 | 🔄 In progress |
+| 1 | Business understanding | Sat | Report 4 | ✅ Done (review pending) |
 | 2 | Data understanding | Sat | Code 5 + Report 4 | ⬜ To do |
 | 3 | Data preprocessing | Sun | Code 12 + Report 5 | ⬜ To do |
 | 4 | Exploratory data analysis | Mon | Code 13 + Report 6 | ⬜ To do |
@@ -45,69 +45,90 @@ Written in [`phase1_business_understanding.md`](phase1_business_understanding.md
 
 | # | Task | Owner | Status |
 |---|---|---|---|
-| 1.1 | Project context | Ahmed Hamouda | 🔄 In progress |
-| 1.2 | Define the problem | Ahmed Hamouda | 🔄 In progress |
-| 1.3 | Research questions | Ahmed Hamouda | 🔄 In progress |
-| 1.4 | Success criteria | Ahmed Hamouda | 🔄 In progress |
+| 1.1 | Project context | Ahmed Hamouda | ✅ Done |
+| 1.2 | Define the problem | Ahmed Hamouda | ✅ Done |
+| 1.3 | Research questions | Ahmed Hamouda | ✅ Done |
+| 1.4 | Success criteria | Ahmed Hamouda | ✅ Done |
 | 1.5 | Review and approve phase 1 | Cyrine Chabbar, Yassine Mtibaa | ⬜ To do |
 
-## Phase 2 — Data understanding (Sat)
+## Phase 2 — Data understanding: exploration and quality assessment (Sat)
 
-Written in [`phase2_data_understanding.md`](phase2_data_understanding.md), one section per dataset.
+Diagnosis only — find, measure and propose; nothing is changed until phase 3.
+Details of every check: [`phase2_data_understanding.md`](phase2_data_understanding.md) (follows lab Part 1).
 
 | # | Task | UNSW | CIC18 | ToN | BoT | IoT23 |
 |---|---|---|---|---|---|---|
-| 2.1 | Describe rows and columns (check against official counts) | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
-| 2.2 | Data types and units | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
-| 2.3 | What are the problems (NaN, inf, duplicates, constant columns, label spellings, imbalance) | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
-| 2.4 | Solution for each problem (without code) | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
+| 2.1 | Initial inspection: structure, rows/columns vs official, data types and units, first issues | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
+| 2.2 | Missing and infinite values: count, % per column, plot, strategy per column | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
+| 2.3 | Data type issues: text→numeric, timestamps→datetime, codes→categorical, label spellings | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
+| 2.4 | Outlier detection: IQR + z-score, box plots by family, legitimate vs error, planned treatment | ⬜ | ⬜ | ⬜ | ⬜ | 🔄 |
+| 2.5 | Consistency: duplicates, identifier uniqueness, formatting, logical checks (`validate`) | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
+| 2.6 | Class distribution (flows per attack label) | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
+| 2.7 | Summary table: every problem → planned solution (no code) | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
 | | **Owner** | Ahmed | Ahmed | Cyrine | Cyrine | Yassine |
 
 | # | Shared task | Owner | Status |
 |---|---|---|---|
-| 2.5 | NetFlow v3 feature dictionary (53 features: name, meaning, unit, type) | Ahmed Hamouda | ⬜ To do |
-| 2.6 | Dataset comparison table and class-distribution plots | Cyrine Chabbar | ⬜ To do |
-| 2.7 | CICIoT2023 feature dictionary (39 features + label, see [ciciot_feature_dictionary.md](ciciot_feature_dictionary.md)) | Yassine Mtibaa | ✅ Done |
+| 2.8 | NetFlow v3 feature dictionary (53 features: name, meaning, unit, type) | Ahmed Hamouda | ⬜ To do |
+| 2.9 | Cross-dataset comparison table and class-distribution plots | Cyrine Chabbar | ⬜ To do |
+| 2.10 | CICIoT2023 feature dictionary (39 features + label, see [ciciot_feature_dictionary.md](ciciot_feature_dictionary.md)) | Yassine Mtibaa | ✅ Done |
 
-## Phase 3 — Data preprocessing (Sun)
+## Phase 3 — Data preprocessing: cleaning (Sun)
+
+Apply the solutions planned in phase 2, with before/after evidence for every step (follows lab Part 2).
 
 | # | Task | UNSW | CIC18 | ToN | BoT | IoT23 |
 |---|---|---|---|---|---|---|
-| 3.1 | Handle all problems with code (ID columns, inf, NaN, duplicates, label mapping, sampling) | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 3.2 | Handle outliers (investigate per class, justify the decision) | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 3.3 | Before/after quality report + save cleaned Parquet | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 3.1 | Handle missing / infinite values (strategy per column, justified, before/after) | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 3.2 | Data type conversion (timestamps→datetime, codes→category), verified | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 3.3 | Standardise categorical values: column names, label spellings → shared taxonomy (`map_labels`) | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 3.4 | Outlier treatment: remove errors, keep legitimate ones; document removed vs kept | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 3.5 | Remove duplicates; drop identifier columns | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 3.6 | Data validation (`validate` returns 0 violations) + data quality report | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 3.7 | Stratified sampling per label + save cleaned Parquet | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | | **Owner** | Ahmed | Ahmed | Cyrine | Cyrine | Yassine |
 
 | # | Shared task | Owner | Status |
 |---|---|---|---|
-| 3.4 | Merge the 4 NetFlow files and run the post-merge checks | Ahmed Hamouda | ⬜ To do |
-| 3.5 | Explain merging / integration decisions | Ahmed Hamouda | ⬜ To do |
-| 3.6 | Explain why CICIoT2023 is kept separate | Yassine Mtibaa | 🔄 In progress |
-| 3.7 | Log every decision in [`decision_log.md`](decision_log.md) | All | ⬜ To do |
+| 3.8 | Merge the 4 NetFlow files and run the post-merge checks | Ahmed Hamouda | ⬜ To do |
+| 3.9 | Explain merging / integration decisions | Ahmed Hamouda | ⬜ To do |
+| 3.10 | Explain why CICIoT2023 is kept separate | Yassine Mtibaa | 🔄 In progress |
+| 3.11 | Log every decision in [`decision_log.md`](decision_log.md) | All | ⬜ To do |
 
 ## Phase 4 — Exploratory data analysis (Mon)
 
 | # | Task | Owner | Status |
 |---|---|---|---|
-| 4.1 | Meaningful descriptive statistics and plots (per family and per source) | Cyrine Chabbar | ⬜ To do |
-| 4.2 | Correlation analysis / heatmap | Ahmed Hamouda | ⬜ To do |
-| 4.3 | Relationships between variables | Cyrine Chabbar | ⬜ To do |
-| 4.4 | Justified hypothesis tests with interpretation: | | |
+| 4.1 | Distributions of key variables (log scale) and descriptive statistics per family and per source | Cyrine Chabbar | ⬜ To do |
+| 4.2 | Correlation analysis / heatmap of numeric features | Ahmed Hamouda | ⬜ To do |
+| 4.3 | Relationships between features and the target (`is_attack`, `attack_family`) | Cyrine Chabbar | ⬜ To do |
+| 4.4 | Interesting patterns and trends (per family, per network) | Yassine Mtibaa | ⬜ To do |
+| 4.5 | Justified hypothesis tests with interpretation: | | |
 | | · Normality check (justifies non-parametric tests) | Yassine Mtibaa | ⬜ To do |
 | | · Mann–Whitney U: benign vs attack, with effect size (RQ1) | Ahmed Hamouda | ⬜ To do |
 | | · Kruskal–Wallis + Dunn post-hoc: across families (RQ2) | Cyrine Chabbar | ⬜ To do |
 | | · Chi-square: protocol × family (RQ2) | Yassine Mtibaa | ⬜ To do |
 | | · Kolmogorov–Smirnov: same attack across networks (RQ3) | Ahmed Hamouda | ⬜ To do |
-| 4.5 | CICIoT2023 EDA, compared to NetFlow at family level | Yassine Mtibaa | ⬜ To do |
+| 4.6 | Class imbalance analysis (RQ4) | Cyrine Chabbar | ⬜ To do |
+| 4.7 | CICIoT2023 EDA, compared to NetFlow at family level | Yassine Mtibaa | ⬜ To do |
 
 ## Phase 5 — Feature engineering (Tue)
 
+Follows lab Parts 3–5. **First step: train/test split** — every encoder, scaler and selector is
+fitted on the training set only (no data leakage).
+
 | # | Task | Owner | Status |
 |---|---|---|---|
-| 5.1 | Feature selection (train/test split first, remove constant and highly correlated features, rank features) | Ahmed Hamouda | ⬜ To do |
-| 5.2 | Extraction / creating / encoding (ratio features, bytes per packet, protocol encoding) | Cyrine Chabbar | ⬜ To do |
-| 5.3 | Scaling / transformation (log transform, scaler fitted on train only) | Yassine Mtibaa | ⬜ To do |
-| 5.4 | Justify the final feature set | All | ⬜ To do |
+| 5.1 | Train/test split (stratified by `attack_label`) | Ahmed Hamouda | ⬜ To do |
+| 5.2 | Time features: duration from timestamps, packets/s, bytes/s (no hour-of-day — it would leak the lab's attack schedule) | Yassine Mtibaa | ⬜ To do |
+| 5.3 | Categorical features: one-hot protocol, frequency/target encoding for L7 protocol and ports, rare categories grouped | Cyrine Chabbar | ⬜ To do |
+| 5.4 | Numeric features: ratios (in/out bytes, bytes per packet), binning, polynomial terms where justified | Cyrine Chabbar | ⬜ To do |
+| 5.5 | Domain-specific features: traffic asymmetry, TCP-flag shares, burstiness from inter-arrival times | Ahmed Hamouda | ⬜ To do |
+| 5.6 | Scaling / transformation: log transform skewed features, RobustScaler fitted on train | Yassine Mtibaa | ⬜ To do |
+| 5.7 | Feature validation: before/after plots, new features vs target | Yassine Mtibaa | ⬜ To do |
+| 5.8 | Feature selection: remove low-variance and highly correlated features, importance ranking, justify | Ahmed Hamouda | ⬜ To do |
+| 5.9 | Export final dataset + data dictionary of all features + usage instructions | Cyrine Chabbar | ⬜ To do |
+| 5.10 | Bonus: PCA (2D view of class separability) | Ahmed Hamouda | ⬜ To do |
 
 ## Phase 6 — Presentation (Wed)
 

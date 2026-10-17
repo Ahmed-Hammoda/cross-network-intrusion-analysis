@@ -30,22 +30,34 @@ quality reports, so all five datasets are processed in exactly the same way.
 
 ## What each dataset notebook must contain (01 to 05)
 
-Same structure for every dataset, so the results line up in the report.
+Same structure for every dataset, so the results line up in the report. It follows the course lab
+(Part 1 for phase 2, Part 2 for phase 3), adapted to network traffic.
 
-**Phase 2 — Data understanding**
-1. Load the file and compare rows and columns with the official numbers in `docs/datasets.md`.
-2. Columns, data types and units (`df.info()`, grouped: identifiers, ports/protocol, bytes/packets, time, TCP flags, labels).
-3. Class distribution: flows per attack label (table + plot saved in `figures/`).
-4. Quality problems: NaN, infinite values, duplicates, constant columns, unexpected label spellings.
-5. A markdown table: each problem found → planned solution (no code yet).
+**Phase 2 — Data understanding (diagnosis only, nothing changed yet)**
+1. **Initial inspection** — `df.shape`, `df.info()`, `df.head()`; rows/columns vs the official numbers
+   in `docs/datasets.md`; table of columns with type and unit; first visible issues.
+2. **Missing values** — `missing_report(df)` (missing and infinite, count and %), a bar plot, and a
+   planned strategy per affected column.
+3. **Data type issues** — numbers stored as text, timestamps stored as integers, codes (protocol,
+   ports, TCP flags) stored as numbers, inconsistent label spellings; a fix for each.
+4. **Outlier detection** — IQR and z-score counts per numeric column, box plots by attack family
+   (log scale), legitimate vs error, planned treatment.
+5. **Consistency** — duplicates (overall and per class), identifier uniqueness, formatting of column
+   names and labels, `validate(df)` for logical checks.
+6. **Class distribution** — flows per attack label (table + plot in `figures/`).
+7. **Summary table** — every problem found → planned solution (markdown, no code).
 
-**Phase 3 — Preprocessing**
-6. `clean(df, SOURCE)` — drops ID columns, handles inf/NaN, removes duplicates.
-7. `map_labels(df, label_col, SOURCE)` — adds `attack_label`, `attack_family`, `is_attack`, `source_dataset`.
-8. Outlier investigation per class, with a written justification of the decision (in intrusion data,
-   extreme values are often the attack itself, so do not remove them blindly).
-9. `sample_per_label(df)` — cap 200k flows per label, every rarer label kept in full.
-10. `quality_report(...)` and `save_clean(df, SOURCE)` — writes `tables/{SOURCE}_quality.csv`,
+**Phase 3 — Preprocessing (apply the plan, with before/after evidence)**
+8. `clean(df, SOURCE, impute={...})` — drops ID columns, handles inf/NaN (per-column imputation if
+   planned), removes duplicates. Show before/after counts.
+9. Type conversions (timestamps → datetime, codes → category) and verify them.
+10. `map_labels(df, label_col, SOURCE)` — standardises labels into `attack_label`, `attack_family`,
+    `is_attack`, `source_dataset`.
+11. Outlier treatment — remove impossible values found by `validate`, keep legitimate extremes;
+    document what was removed vs kept and why.
+12. `validate(df)` again — every check must show 0 violations.
+13. `sample_per_label(df)` — cap 200k flows per label, every rarer label kept in full.
+14. `quality_report(...)` and `save_clean(df, SOURCE)` — writes `tables/{SOURCE}_quality.csv`,
     `tables/{SOURCE}_labels.csv` and `data/processed/{SOURCE}_clean.parquet`.
 
 Any decision not covered by `config.py` goes into `docs/decision_log.md` **before** you apply it.

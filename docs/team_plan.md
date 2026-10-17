@@ -1,37 +1,26 @@
 # Team plan
 
-## Task split
+Tasks, days and status are tracked in the [task board](TASK_BOARD.md).
 
-| Member | Datasets | Also responsible for |
-|---|---|---|
-| Member 1 | NF-UNSW-NB15-v3, NF-CSE-CIC-IDS2018-v3 | Phase 1 (business understanding), NetFlow feature dictionary, final merge |
-| Member 2 | NF-ToN-IoT-v3, NF-BoT-IoT-v3 | Dataset comparison table, class-balance plots for NetFlow data |
-| Member 3 | CICIoT2023 | CICIoT2023 feature dictionary, "why not merged" section |
+## Ownership
 
-## Schedule
+| Member | Datasets | Notebooks | Also responsible for |
+|---|---|---|---|
+| Member 1 | NF-UNSW-NB15-v3, NF-CSE-CIC-IDS2018-v3 | `01_unsw`, `02_cic18`, `06_merge_netflow` | Phase 1, NetFlow feature dictionary, final merge |
+| Member 2 | NF-ToN-IoT-v3, NF-BoT-IoT-v3 | `03_ton`, `04_bot` | Dataset comparison table, class-balance plots |
+| Member 3 | CICIoT2023 | `05_ciciot2023` | CICIoT2023 feature dictionary, "why not merged" section |
 
-| Day | Work |
+`07_eda` and `08_feature_engineering` are shared: each member works in the sections assigned to
+them on the task board.
+
+## Why there are no dependencies between members
+
+| Possible dependency | How it is removed |
 |---|---|
-| Sat | Phase 1 + Phase 2: business understanding, data understanding (rows, columns, types, units, problems, planned solutions) |
-| Sun | Phase 3: preprocessing with code, outliers, merge / integration decisions |
-| Mon | Phase 4: EDA, descriptive statistics, correlations, hypothesis tests |
-| Tue | Phase 5: feature engineering |
-| Wed | Presentation + report |
+| "I need your code to start" | Everyone calls the same shared functions in `src/config.py` |
+| "Which family does label X go in?" | The taxonomy is fixed in `src/config.py` |
+| "Your output doesn't fit my merge" | Same columns, file names and data types for every output |
+| "Our report tables don't match" | `quality_report()` writes the same table format for everyone |
 
-## Notebook per member (avoids git merge conflicts)
-
-| Notebook | Owner |
-|---|---|
-| `notebooks/01_unsw.ipynb` | Member 1 |
-| `notebooks/02_cic18.ipynb` | Member 1 |
-| `notebooks/03_ton.ipynb` | Member 2 |
-| `notebooks/04_bot.ipynb` | Member 2 |
-| `notebooks/05_ciciot2023.ipynb` | Member 3 |
-| `notebooks/06_merge_netflow.ipynb` | Member 1 |
-
-## Research questions
-
-1. Which flow features best separate benign traffic from attacks, and does that change by attack family?
-2. Are attack families statistically distinguishable from each other using flow statistics?
-3. Do the same attack types (DoS, scanning, brute force) look statistically the same on different networks?
-4. How severe is class imbalance, and which rare attacks will need special handling later?
+The only joining step is the merge in `06_merge_netflow`, which only reads files that already
+follow the same format.

@@ -1,0 +1,35 @@
+original_label,attack_label,attack_family,rows,% of rows
+DDOS-ICMP_FLOOD,DDoS ICMP flood,Denial of service,6893259,15.3118
+DDOS-UDP_FLOOD,DDoS UDP flood,Denial of service,5181027,11.5085
+DDOS-TCP_FLOOD,DDoS TCP flood,Denial of service,4306086,9.565
+DDOS-PSHACK_FLOOD,DDoS PSH-ACK flood,Denial of service,3920372,8.7082
+DDOS-SYN_FLOOD,DDoS SYN flood,Denial of service,3886130,8.6322
+DDOS-RSTFINFLOOD,DDoS RST-FIN flood,Denial of service,3872808,8.6026
+DDOS-SYNONYMOUSIP_FLOOD,DDoS Synonymous-IP flood,Denial of service,3445659,7.6537
+DOS-UDP_FLOOD,DoS UDP flood,Denial of service,3177323,7.0577
+DOS-TCP_FLOOD,DoS TCP flood,Denial of service,2558256,5.6826
+DOS-SYN_FLOOD,DoS SYN flood,Denial of service,1942176,4.3141
+BENIGN,Benign,Benign,1051373,2.3354
+MIRAI-GREETH_FLOOD,Mirai GRE-Eth flood,Malware and botnets,949381,2.1088
+MIRAI-UDPPLAIN,Mirai UDP-Plain,Malware and botnets,852695,1.8941
+MIRAI-GREIP_FLOOD,Mirai GRE-IP flood,Malware and botnets,719655,1.5985
+DDOS-ICMP_FRAGMENTATION,DDoS ICMP fragmentation,Denial of service,433157,0.9622
+VULNERABILITYSCAN,Vulnerability scan,Reconnaissance,357583,0.7943
+MITM-ARPSPOOFING,ARP spoofing,Interception and spoofing,294469,0.6541
+DDOS-UDP_FRAGMENTATION,DDoS UDP fragmentation,Denial of service,274909,0.6106
+DDOS-ACK_FRAGMENTATION,DDoS ACK fragmentation,Denial of service,272793,0.6059
+DNS_SPOOFING,DNS spoofing,Interception and spoofing,171468,0.3809
+RECON-HOSTDISCOVERY,Host discovery,Reconnaissance,128677,0.2858
+RECON-OSSCAN,OS scan,Reconnaissance,93970,0.2087
+RECON-PORTSCAN,Port scan,Reconnaissance,78730,0.1749
+DOS-HTTP_FLOOD,DoS HTTP flood,Denial of service,68799,0.1528
+DDOS-HTTP_FLOOD,DDoS HTTP flood,Denial of service,27597,0.0613
+DDOS-SLOWLORIS,DDoS SlowLoris,Denial of service,22400,0.0498
+DICTIONARYBRUTEFORCE,Dictionary brute force,Credential attacks,12522,0.0278
+BROWSERHIJACKING,Browser hijacking,Web and injection,5630,0.0125
+COMMANDINJECTION,Command injection,Web and injection,5168,0.0115
+SQLINJECTION,SQL injection,Web and injection,5022,0.0112
+XSS,XSS,Web and injection,3705,0.0082
+BACKDOOR_MALWARE,Backdoor malware,Web and injection,3078,0.0068
+RECON-PINGSWEEP,Ping sweep,Reconnaissance,2161,0.0048
+UPLOADING_ATTACK,Uploading attack,Web and injection,1196,0.0027

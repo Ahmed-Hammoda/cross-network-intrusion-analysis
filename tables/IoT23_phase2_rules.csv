@@ -1,0 +1,18 @@
+,violating rows,% of rows
+Min > Max,0,0.0
+"AVG outside [Min, Max]",0,0.0
+Std < 0 or Variance < 0,0,0.0
+"Time_To_Live outside [0, 255]",0,0.0
+"Number outside [1, 100]",0,0.0
+a *_count > Number,0,0.0
+"a share column outside [0, 1]",0,0.0
+Header_Length > 60 (max TCP header),0,0.0
+IAT < 0,2,0.0
+Tot size != AVG,7,2e-05
+IPv != LLC,7,2e-05
+Variance != Std^2,679,0.00151
+Tot sum != AVG x Number,8,2e-05
+x_count != x_flag_number x Number,8,2e-05
+TCP share > 0.5 but Protocol Type != 6,0,0.0
+UDP share > 0.5 but Protocol Type != 17,0,0.0
+ICMP share > 0.5 but Protocol Type != 1,0,0.0

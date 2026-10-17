@@ -1,0 +1,41 @@
+group,column,dtype,unit,min,max,mean
+Ports / protocol,Protocol Type,int64,"IANA code (1 ICMP, 2 IGMP, 6 TCP, 17 UDP, 47 GRE, 0 other)",0.0,47.0,9.09130757707321
+Ports / protocol,Header_Length,float64,bytes (window average),0.0,60.0,13.737130570883858
+Ports / protocol,Time_To_Live,float64,hops (window average),0.0,255.0,66.53169182664372
+Protocol shares (0-1),HTTP,float64,share of packets in window (0-1),0.0,1.0,0.05023113314790658
+Protocol shares (0-1),HTTPS,float64,share of packets in window (0-1),0.0,1.0,0.05876339959268191
+Protocol shares (0-1),DNS,float64,share of packets in window (0-1),0.0,1.0,0.0026321500032823863
+Protocol shares (0-1),Telnet,float64,share of packets in window (0-1),0.0,0.6,1.0708775861537795e-05
+Protocol shares (0-1),SMTP,float64,share of packets in window (0-1),0.0,0.9,1.0601778294441098e-05
+Protocol shares (0-1),SSH,float64,share of packets in window (0-1),0.0,1.0,0.00020595367384560292
+Protocol shares (0-1),IRC,float64,share of packets in window (0-1),0.0,0.9,1.6264887246831606e-05
+Protocol shares (0-1),TCP,float64,share of packets in window (0-1),0.0,1.0,0.5746882413734161
+Protocol shares (0-1),UDP,float64,share of packets in window (0-1),0.0,1.0,0.21731029578888564
+Protocol shares (0-1),DHCP,float64,share of packets in window (0-1),0.0,1.0,0.00017509078235909193
+Protocol shares (0-1),ARP,float64,share of packets in window (0-1),0.0,1.0,0.0028300371677391378
+Protocol shares (0-1),ICMP,float64,share of packets in window (0-1),0.0,1.0,0.16348712398025206
+Protocol shares (0-1),IGMP,float64,share of packets in window (0-1),0.0,1.0,2.0872378420001317e-05
+Protocol shares (0-1),IPv,float64,share of packets in window (0-1),0.0,1.0,0.9971699629915257
+Protocol shares (0-1),LLC,float64,share of packets in window (0-1),0.0,1.0,0.9971699629915257
+"Volume (bytes, packets)",Tot sum,int64,bytes,60.0,316492.0,10953.114965567163
+"Volume (bytes, packets)",Min,int64,bytes,42.0,13583.0,79.95892749046207
+"Volume (bytes, packets)",Max,int64,bytes,46.0,52194.0,223.34750791861507
+"Volume (bytes, packets)",AVG,float64,bytes,46.0,13583.0,131.42835127837955
+"Volume (bytes, packets)",Std,float64,bytes,0.0,11655.404669079491,41.311500633588096
+"Volume (bytes, packets)",Tot size,float64,bytes,46.0,13583.0,131.42835127837955
+"Volume (bytes, packets)",Variance,float64,bytes²,0.0,135848458.0,34246.20086259061
+"Volume (bytes, packets)",Number,int64,packets in window,1.0,100.0,95.51115031163901
+"Time (rate, IAT)",Rate,float64,packets / s,1.272070358718431e-05,15728640.0,28401.301100534485
+"Time (rate, IAT)",IAT,float64,seconds,-0.0178179788589477,78612.00389949084,0.01030335749068125
+TCP flags,fin_flag_number,float64,share of packets in window (0-1),0.0,1.0,0.08691976803234704
+TCP flags,syn_flag_number,float64,share of packets in window (0-1),0.0,1.0,0.2064461695514779
+TCP flags,rst_flag_number,float64,share of packets in window (0-1),0.0,1.0,0.09291068569030586
+TCP flags,psh_flag_number,float64,share of packets in window (0-1),0.0,1.0,0.09386674367168715
+TCP flags,ack_flag_number,float64,share of packets in window (0-1),0.0,1.0,0.12978939096833758
+TCP flags,ece_flag_number,float64,share of packets in window (0-1),0.0,1.0,2.8328779093490463e-05
+TCP flags,cwr_flag_number,float64,share of packets in window (0-1),0.0,1.0,1.4632493019761308e-05
+TCP flags,ack_count,int64,packets with this flag (0-100),0.0,100.0,9.856238091619536
+TCP flags,syn_count,int64,packets with this flag (0-100),0.0,100.0,20.399865093238688
+TCP flags,fin_count,int64,packets with this flag (0-100),0.0,100.0,8.608304813490747
+TCP flags,rst_count,int64,packets with this flag (0-100),0.0,100.0,9.171135181954757
+Labels,Label,str,34 classes (text),,,

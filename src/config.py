@@ -31,7 +31,7 @@ for _d in (RAW_DIR, PROCESSED_DIR, FIG_DIR, TABLE_DIR):
 # ---------------------------------------------------------------------------
 DATASETS = {
     "UNSW":   {"file": "NF-UNSW-NB15-v3.csv",       "group": "netflow", "owner": "Ahmed Hamouda", "network": "Mixed lab"},
-    "CIC18":  {"file": "NF-CSE-CIC-IDS2018-v3.csv", "group": "netflow", "owner": "Ahmed Hamouda", "network": "Enterprise / office"},
+    "CIC18":  {"file": "NF-CICIDS2018-v3.csv",     "group": "netflow", "owner": "Ahmed Hamouda", "network": "Enterprise / office"},
     "ToN":    {"file": "NF-ToN-IoT-v3.csv",         "group": "netflow", "owner": "Cyrine Chabbar", "network": "IoT / industrial"},
     "BoT":    {"file": "NF-BoT-IoT-v3.csv",         "group": "netflow", "owner": "Cyrine Chabbar", "network": "IoT botnet"},
     "IoT23":  {"file": "CICIoT2023/",               "group": "ciciot",  "owner": "Yassine Mtibaa", "network": "Real IoT devices"},

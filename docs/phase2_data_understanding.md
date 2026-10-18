@@ -176,6 +176,33 @@ present or not), and `Number` (capture artefact to watch).
 Largest label `DDoS ICMP flood` (6,893,259) vs smallest `Uploading attack` (1,196): **5,764×**.
 All 34 labels map to `TAXONOMY` without changes (`map_labels` normalises the UPPERCASE spellings).
 
+**Outlier detection (2.4)** (`tables/IoT23_phase2_outliers.csv`, `figures/IoT23_boxplots_by_family.png`)
+
+IQR rule and z-score on a uniform random sample of ~750k rows (quantiles need every value); minima, maxima and
+physical-limit checks on all rows. The 22 share columns are bounded in [0, 1] and not tested.
+
+| Column | Mild IQR outliers | \|z\| > 3 | Why so many / so few |
+|---|---|---|---|
+| `Time_To_Live` | 27.0 % | 1.9 % | IQR = 0 (most windows have TTL 64): every other value counts as an outlier |
+| `Tot sum` | 25.1 % | 2.2 % | most windows are 100 × 60-byte packets; benign and web traffic carry far more bytes |
+| `Max`, `AVG`, `Std` | 21–22 % | 1.5–3.1 % | floods use minimum-size packets; benign windows have large, varied packets |
+| `IAT` | 13.7 % | 0.001 % | extremely skewed (skewness 866): a few very long gaps inflate the standard deviation |
+
+The IQR rule over-flags columns dominated by one value, and the z-score under-flags because extreme values
+inflate the standard deviation. Box plots by family show that a value that is extreme for the whole dataset is often
+**typical for one family** (high `Rate` and short `IAT` for floods, large packets for benign and web traffic,
+`Header_Length` = 0 for ICMP/GRE floods), so outliers are not removed globally.
+
+| Value | Verdict | Rows (all data) | Planned treatment |
+|---|---|---|---|
+| `Rate` = inf | error (window of 0 s) | 991 | drop (3.1) |
+| `IAT` < 0 | error (impossible) | 2 | drop (3.4) |
+| `Rate` very high (max 1.57 × 10⁷ pkt/s) | legitimate: floods | — | keep; log transform in phase 5 |
+| `Max` > 1,514 bytes | legitimate: captured before segmentation offload | 687,281 | keep, documented |
+| `Header_Length` = 0 | legitimate: ICMP / GRE have no TCP/UDP header | 7,177,555 | keep |
+| `Time_To_Live` = 0 | legitimate: non-IP (ARP) windows | 455 | keep |
+| `IAT` > 1 hour (max 78,612 s) | doubtful but possible (idle device) | 14 | keep, flagged |
+
 **Initial quality problems and planned solutions (no code)**
 
 | # | Problem found | Columns / rows affected | Planned solution | Rule in `config.py`? |
@@ -184,8 +211,8 @@ All 34 labels map to `TAXONOMY` without changes (`map_labels` normalises the UPP
 | 2 | Label column is `Label`, not `label` | `Label` | Pass `"Label"` to `map_labels` | No → decision log |
 | 3 | 7 truncated lines (12–36 empty cells), 9 rows without label | Merged42/44/46/48/50/51/52 | Dropped by `clean()` (NaN rows) | Yes (`clean`) |
 | 4 | 8 integer columns read as float in those files | `*_count`, `Tot sum`, `Min`, `Max`, `Number` | Resolved once the truncated lines are dropped; `downcast()` | Yes (`clean`) |
-| 5 | `Std`/`Variance` NaN for single-packet windows (structural) | 670 rows, all `Number` = 1 | Dropped by `clean()`; documented | Yes (`clean`) |
-| 6 | Infinite `Rate` (window of 0 s) | 991 rows, many classes | inf → NaN → dropped | Yes (`clean`) |
+| 5 | `Std`/`Variance` NaN for single-packet windows (structural) | 670 rows, all `Number` = 1 — the same rows also have `Rate` = inf | Dropped by `clean()` with the zero-duration windows; no imputation | Yes (`clean`) |
+| 6 | Infinite `Rate` (window of 0 s) | 991 rows: 670 single-packet + 321 windows of 2–8 packets sharing one timestamp | inf → NaN → dropped | Yes (`clean`) |
 | 7 | Negative `IAT` (impossible) | 2 rows | Set to NaN → dropped | No → decision log |
 | 8 | Exact duplicate rows | 22,976,869 rows (51.0 %), ≈ 70 % of DDoS ICMP flood | `clean()` per file, then again after concatenation | Yes (`clean`) |
 | 9 | Same features with different labels | 610,472 vectors, 13,286,035 rows (29.5 %): DoS vs DDoS of the same flood type | Keep for EDA and report (SQ1); drop before any model training | No → decision log (open) |

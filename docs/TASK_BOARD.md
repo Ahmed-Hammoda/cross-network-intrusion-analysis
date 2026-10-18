@@ -61,7 +61,7 @@ Details of every check: [`phase2_data_understanding.md`](phase2_data_understandi
 | 2.1 | Initial inspection: structure, rows/columns vs official, data types and units, first issues | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
 | 2.2 | Missing and infinite values: count, % per column, plot, strategy per column | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
 | 2.3 | Data type issues: text→numeric, timestamps→datetime, codes→categorical, label spellings | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
-| 2.4 | Outlier detection: IQR + z-score, box plots by family, legitimate vs error, planned treatment | ⬜ | ⬜ | ⬜ | ⬜ | 🔄 |
+| 2.4 | Outlier detection: IQR + z-score, box plots by family, legitimate vs error, planned treatment | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
 | 2.5 | Consistency: duplicates, identifier uniqueness, formatting, logical checks (`validate`) | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
 | 2.6 | Class distribution (flows per attack label) | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
 | 2.7 | Summary table: every problem → planned solution (no code) | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
@@ -79,20 +79,20 @@ Apply the solutions planned in phase 2, with before/after evidence for every ste
 
 | # | Task | UNSW | CIC18 | ToN | BoT | IoT23 |
 |---|---|---|---|---|---|---|
-| 3.1 | Handle missing / infinite values (strategy per column, justified, before/after) | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 3.2 | Data type conversion (timestamps→datetime, codes→category), verified | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 3.3 | Standardise categorical values: column names, label spellings → shared taxonomy (`map_labels`) | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 3.4 | Outlier treatment: remove errors, keep legitimate ones; document removed vs kept | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 3.5 | Remove duplicates; drop identifier columns | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 3.6 | Data validation (`validate` returns 0 violations) + data quality report | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 3.7 | Stratified sampling per label + save cleaned Parquet | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 3.1 | Handle missing / infinite values (strategy per column, justified, before/after) | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
+| 3.2 | Data type conversion (timestamps→datetime, codes→category), verified | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
+| 3.3 | Standardise categorical values: column names, label spellings → shared taxonomy (`map_labels`) | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
+| 3.4 | Outlier treatment: remove errors, keep legitimate ones; document removed vs kept | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
+| 3.5 | Remove duplicates; drop identifier columns | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
+| 3.6 | Data validation (`validate` returns 0 violations) + data quality report | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
+| 3.7 | Stratified sampling per label + save cleaned Parquet | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
 | | **Owner** | Ahmed | Ahmed | Cyrine | Cyrine | Yassine |
 
 | # | Shared task | Owner | Status |
 |---|---|---|---|
 | 3.8 | Merge the 4 NetFlow files and run the post-merge checks | Ahmed Hamouda | ⬜ To do |
 | 3.9 | Explain merging / integration decisions | Ahmed Hamouda | ⬜ To do |
-| 3.10 | Explain why CICIoT2023 is kept separate | Yassine Mtibaa | 🔄 In progress |
+| 3.10 | Explain why CICIoT2023 is kept separate (notebook 05 end + `datasets.md`) | Yassine Mtibaa | ✅ Done |
 | 3.11 | Log every decision in [`decision_log.md`](decision_log.md) | All | ⬜ To do |
 
 ## Phase 4 — Exploratory data analysis (Mon)

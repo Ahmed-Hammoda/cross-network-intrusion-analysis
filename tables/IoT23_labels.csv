@@ -1,0 +1,35 @@
+attack_label,source_dataset,flows_after_cleaning,flows_after_sampling,attack_family
+ARP spoofing,IoT23,268944,200000,Interception and spoofing
+Backdoor malware,IoT23,3075,3075,Web and injection
+Benign,IoT23,1047237,200000,Benign
+Browser hijacking,IoT23,5560,5560,Web and injection
+Command injection,IoT23,5150,5150,Web and injection
+DDoS ACK fragmentation,IoT23,271509,200000,Denial of service
+DDoS HTTP flood,IoT23,27597,27597,Denial of service
+DDoS ICMP flood,IoT23,1893531,200000,Denial of service
+DDoS ICMP fragmentation,IoT23,431141,200000,Denial of service
+DDoS PSH-ACK flood,IoT23,1637315,200000,Denial of service
+DDoS RST-FIN flood,IoT23,1248628,200000,Denial of service
+DDoS SYN flood,IoT23,1749271,200000,Denial of service
+DDoS SlowLoris,IoT23,22399,22399,Denial of service
+DDoS Synonymous-IP flood,IoT23,1166330,200000,Denial of service
+DDoS TCP flood,IoT23,1538740,200000,Denial of service
+DDoS UDP flood,IoT23,1876939,200000,Denial of service
+DDoS UDP fragmentation,IoT23,273385,200000,Denial of service
+DNS spoofing,IoT23,166920,166920,Interception and spoofing
+Dictionary brute force,IoT23,12520,12520,Credential attacks
+DoS HTTP flood,IoT23,68441,68441,Denial of service
+DoS SYN flood,IoT23,1133712,200000,Denial of service
+DoS TCP flood,IoT23,1112203,200000,Denial of service
+DoS UDP flood,IoT23,1720850,200000,Denial of service
+Host discovery,IoT23,127862,127862,Reconnaissance
+Mirai GRE-Eth flood,IoT23,895834,200000,Malware and botnets
+Mirai GRE-IP flood,IoT23,693587,200000,Malware and botnets
+Mirai UDP-Plain,IoT23,764900,200000,Malware and botnets
+OS scan,IoT23,92319,92319,Reconnaissance
+Ping sweep,IoT23,2161,2161,Reconnaissance
+Port scan,IoT23,76788,76788,Reconnaissance
+SQL injection,IoT23,5021,5021,Web and injection
+Uploading attack,IoT23,1196,1196,Web and injection
+Vulnerability scan,IoT23,356280,200000,Reconnaissance
+XSS,IoT23,3705,3705,Web and injection

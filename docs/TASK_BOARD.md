@@ -34,7 +34,7 @@ Update the status in your own rows when you finish a task, and commit with a mes
 | Work split by dataset, no dependencies | All | ✅ Done |
 | Shared contract `src/config.py` | Ahmed Hamouda | ✅ Done |
 | GitHub repository and documentation | Ahmed Hamouda | ✅ Done |
-| Clone the repo and `pip install -r requirements.txt` | Cyrine Chabbar | ⬜ To do |
+| Clone the repo and `pip install -r requirements.txt` | Cyrine Chabbar | ✅ To do |
 | Clone the repo and `pip install -r requirements.txt` | Yassine Mtibaa | ✅ Done |
 
 ---

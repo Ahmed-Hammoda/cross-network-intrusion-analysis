@@ -1,10 +1,14 @@
 # Phase 2 — Data understanding (data exploration and quality assessment)
 
-> Each member fills in one section per dataset they own. General dataset descriptions are in
+> **Status: done for all five datasets** (sections at the end of this file). General dataset descriptions are in
 > [`datasets.md`](datasets.md); attack descriptions are in [`attack_taxonomy.md`](attack_taxonomy.md).
 >
 > **Phase 2 is diagnosis only:** find and measure the problems, and propose a solution for each.
-> Nothing is changed in the data until phase 3.
+> The data was changed only in phase 3, after the team approved every decision ([`decision_log.md`](decision_log.md)).
+>
+> For the four NetFlow datasets, every problem with its evidence, real examples and decision is in
+> [`report/data_problems/phase2_data_problems.pdf`](../report/data_problems/phase2_data_problems.pdf).
+> The codes used below (U = UNSW, C = CIC18, T = ToN, B = BoT, M = after the merge, K = kept as it is) refer to it.
 
 The five checks below follow the structure of the course lab (Part 1, questions 1.1–1.5), adapted
 from customer data to network-traffic data.
@@ -89,35 +93,6 @@ with the planned treatment.
 `validate(df)` in `src/config.py` runs the automatic logical checks and returns a table.
 
 **Deliverable:** duplicate counts, identifier check, formatting findings, logical-check table.
-
----
-
-## Template — copy one block per dataset
-
-### `<KEY>` — `<dataset name>` (owner: `<member name>`)
-
-**2.1 Initial inspection**
-
-| | Official | Loaded | Match? |
-|---|---|---|---|
-| Rows | | | |
-| Columns | | | |
-
-Columns, types and units: *(table)* · First observations: *(text)*
-
-**2.2 Missing values** — *(table + plot)*
-
-**2.3 Data type issues** — *(table)*
-
-**2.4 Outliers** — *(table + box plots)*
-
-**2.5 Consistency** — *(duplicates, identifier check, formatting, logical checks)*
-
-**Summary: problems found and planned solutions (no code)**
-
-| # | Problem | Columns / rows affected | Planned solution | Phase 3 step |
-|---|---|---|---|---|
-| 1 | | | | |
 
 ---
 
@@ -238,14 +213,86 @@ problems that must be solved **before the merge** (one section per dataset) and 
 merged table**, each split into "change the data" and "keep it as it is". The decisions are logged in
 [`decision_log.md`](decision_log.md).
 
-**Dimensions** — all four files have 55 columns: 53 features + `Label` (0/1) + `Attack` (class name).
+Numbers in the tables are given in the order **UNSW / CIC18 / ToN / BoT**.
+
+**2.1 Initial inspection** — all four files have 55 columns: 53 features + `Label` (0/1) + `Attack` (class name),
+with the same names in the same order.
 
 | | Official rows | Loaded rows | Match? |
 |---|---|---|---|
 | `UNSW` | 2,365,424 | 2,365,424 | Yes |
 | `CIC18` | 20,115,529 | 20,115,529 | Yes |
 | `ToN` | 27,520,260 | 27,520,260 | Yes |
-| `BoT` | 16,993,808 (official page) | 16,933,808 | No — typo on the official page; Theft is 1,615 flows, not 1,651 |
+| `BoT` | 16,993,808 (official page) | 16,933,808 | No — typo on the official page (B4); Theft is 1,615 flows, not 1,651 |
+
+| Group | Example columns | Type in the files | Unit | First observation |
+|---|---|---|---|---|
+| Identifiers | `IPV4_SRC_ADDR`, `IPV4_DST_ADDR`, `L4_SRC_PORT`, `DNS_QUERY_ID` | text / integer | — | IPs reveal the label (M3); source port and query ID are random (M5) |
+| Ports and protocol codes | `L4_DST_PORT`, `PROTOCOL`, `L7_PROTO`, `ICMP_TYPE`, `DNS_QUERY_TYPE`, `FTP_COMMAND_RET_CODE` | integer (`L7_PROTO` float in UNSW and BoT) | code | Codes, not quantities (M1) |
+| TCP flags | `TCP_FLAGS`, `CLIENT_TCP_FLAGS`, `SERVER_TCP_FLAGS` | integer bitmask | code | `TCP_FLAGS` = client OR server (M8) |
+| Volume | `IN_BYTES`, `OUT_BYTES`, `IN_PKTS`, `OUT_PKTS`, packet-size bins | integer | bytes, packets | — |
+| Time | `FLOW_START_MILLISECONDS`, `FLOW_DURATION_MILLISECONDS`, `..._IAT_...` | integer | ms since 1970, ms | Timestamps reveal the attack schedule (M2) |
+| Rates | `SRC_TO_DST_SECOND_BYTES`, `DST_TO_SRC_SECOND_BYTES` | float in UNSW and BoT, integer in CIC18 and ToN | bytes/s | Different type per dataset (C3, T3) |
+| TTL | `MIN_TTL`, `MAX_TTL` | integer | hops | Fingerprint of the machines (M4) |
+| Labels | `Label`, `Attack` | integer / text | — | Two target columns (K15) |
+
+The official feature description has errors and is one document for all four datasets (K16).
+
+**2.2 Missing and infinite values**
+
+| Problem | UNSW | CIC18 | ToN | BoT | Decision |
+|---|---|---|---|---|---|
+| NaN in `..._SECOND_BYTES` (U2, B2) | 63,425 | 0 | 0 | 387,350 | Drop both columns before `clean()` |
+| inf in `..._SECOND_BYTES` | 181,561 | 0 | 0 | 1,716,860 | (same) |
+| ICMP fields filled on TCP / UDP flows (M6) | 1.75 M | 1.54 M | 429 k | 9.8 k | Set to 0 on the merged table |
+| TTL = 0, "not recorded" (K1) | 1.1 % | 39.5 % | 67.2 % | 11.6 % | Keep 0 as "unknown"; TTL is not a feature |
+
+The NaN and inf values come from flows of 0 ms (bytes ÷ 0). They are not spread evenly: they hit 75.8 % of
+UNSW Generic and 65 % of BoT Benign, 70 % of Theft. `clean()` drops every row with a NaN, so the columns are dropped
+instead of the rows. CIC18 and ToN store the same columns as integers, so they have no NaN. Zeros in DNS and FTP
+fields mean "does not apply" and are kept, not imputed (K2).
+
+**2.3 Data type issues**
+
+| Column | Current type | Correct type | Fix (phase 3) |
+|---|---|---|---|
+| `L7_PROTO` | float `main.sub` in UNSW and BoT, integer in CIC18 and ToN | two integer codes | Split into `L7_MAIN` + `L7_SUB` (U3, B3, C3, T3); 8 ambiguous values in UNSW, 796 in BoT (`7.5`) |
+| `..._SECOND_BYTES` | float / integer | — | Dropped (U2, B2, C3, T3) |
+| `FLOW_START_MILLISECONDS`, `FLOW_END_MILLISECONDS` | integer (ms) | datetime | Converted on the merged table; never features (M2) |
+| 11 code columns (ports, protocols, flags, ICMP / DNS / FTP codes) | integer | category | Converted on the merged table (M1) |
+| `Attack` | text, inconsistent spellings | clean label + family | `map_labels`; 11 CIC18 spellings added to `TAXONOMY` (C1, T1) |
+| `Label` | integer 0/1 | — | Same information as `Attack` (0 disagreements); dropped after `map_labels` (K15) |
+
+**2.4 Outliers** — the IQR rule flags 5–25 % of the flows in each column (K10). As in CICIoT2023, the extreme
+values are mostly the attacks themselves (floods, scans), so they are kept and log-transformed in phase 5.
+Values that break a rule were checked one by one:
+
+| Value | UNSW / CIC18 / ToN / BoT | Verdict | Treatment |
+|---|---|---|---|
+| DNS TTL above 2³¹−1 (M9) | 12 / 0 / 0 / 320 | invalid (RFC 2181) | Set to 0 |
+| Byte count too small for the number of packets (K3) | 45,540 / 0 / 53,198 / 80 | exporter error | Keep, documented |
+| Size bins do not add up to the packet count (K4) | 482,792 / 1,100,188 / 148,670 / 1,356 | exporter quirk | Keep; use bins as shares |
+| Largest gap between packets longer than the flow (K5) | 33,970 / 547,302 / 106,238 / 111 | exporter quirk | Keep, documented |
+| Packets above 1,514 bytes (K6) | 0 / 1,002 / 554 / 1,075 | segmentation offload | Keep |
+| Average gap smaller than the minimum gap (K17) | 316 / 862,525 / 456,179 / 43,806 | `IAT_MIN` = smallest non-zero gap | Keep |
+| TCP window 0 although packets were sent (K18) | 45,884 / 1,371,482 / 3,082,721 / 2,936,334 | real (resets, refused connections) | Keep |
+| Unassigned protocol numbers, port 0, invalid DNS / ICMP codes (U7) | UNSW: 754 + 6 + 6 + 6 flows, all attacks | part of the attack | Keep |
+
+K17 and K18 were found in Cyrine Chabbar's ToN-IoT check and then measured in all four datasets.
+
+**2.5 Consistency**
+
+| Check | UNSW / CIC18 / ToN / BoT | Decision |
+|---|---|---|
+| Exact duplicate rows (U4, C4, T4) | 14,815 / 628,474 / 1,816,137 / 0 | Remove |
+| No unique flow identifier: rows sharing IPs + ports + start time (K9) | 483,517 / 1,344 / 1,306,753 / 612 | Never deduplicate on this key |
+| Label spellings missing from the taxonomy (C1, T1) | — / 11 of 15 labels / 10 labels / — | `map_labels` |
+| `Label` disagrees with `Attack` (K15) | 0 / 0 / 0 / 0 | — |
+| Same flow with two labels (C5) | — / 880 rows / — / — | Remove all copies |
+| Labels that do not match the traffic (C6, C7, T5) | — / 105,550 + 150,600 / 1,261,353 / — | Remove |
+| Same behaviour, different attack label (U8, T7, B6) | 30,907 rows / — / e.g. 1.67 M DDoS + 695 Injection / 272,961 rows | Keep; report at family level too |
+| Attack flows identical to Benign flows (T6, B7) | — / (C7) / 6.1 M / 378,185 | Keep; limit of single-flow features |
+| Columns that copy other columns (M7, M8) | 4 columns in every dataset | Drop on the merged table |
 
 **Class distribution** (flows in the raw file; `tables/<KEY>_labels.csv`)
 
@@ -256,7 +303,10 @@ merged table**, each split into "change the data" and "keep it as it is". The de
 | `ToN` | 16,792,214 (61.0 %) | 10,728,046 | DDoS 4,141,256, XSS 2,834,435 | Ransomware 3,971, MITM 6,013 |
 | `BoT` | 51,989 (0.3 %) | 16,881,819 | DoS 8,034,190, DDoS 7,150,882 | Theft 1,615 |
 
-**Main problems found** (codes as in the report)
+Each dataset covers only part of the 9 families: UNSW 5, CIC18 5, ToN 6, BoT 3 (U6, C9, T9, B5). The merge is
+what brings them together.
+
+**Summary: problems found and decisions** (all approved by the team and applied in phase 3)
 
 | Code | Problem | Decision |
 |---|---|---|
@@ -295,5 +345,5 @@ per different behaviour; merged 17,551,848 rows standing for 63,012,224 flows.
 
 ## Feature dictionaries
 
-- NetFlow v3 — 53 features (Ahmed Hamouda): `netflow_feature_dictionary.md`
+- NetFlow v3 — 53 features (Ahmed Hamouda): to do (task 2.8); until then the column groups are in the NetFlow section above
 - CICIoT2023 — 39 features + `Label` in the release we use (Yassine Mtibaa): `ciciot_feature_dictionary.md`

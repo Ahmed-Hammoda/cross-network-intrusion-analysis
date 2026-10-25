@@ -1,0 +1,8 @@
+source,attack_family,median packet size (B),median rate (pkt/s),% TCP,% UDP,% ICMP
+IoT23,Benign,249.8,170.6,91.4,8.36,0.03
+IoT23,Credential attacks,120.5,106.63,83.3,15.5,0.14
+IoT23,Denial of service,60.29,12291.0,63.36,22.05,14.57
+IoT23,Interception and spoofing,359.3,482.37,67.12,32.02,0.07
+IoT23,Malware and botnets,572.8,4402.59,0.52,33.38,0.03
+IoT23,Reconnaissance,106.6,122.01,84.85,14.11,0.06
+IoT23,Web and injection,144.2,72.51,75.58,22.84,0.29

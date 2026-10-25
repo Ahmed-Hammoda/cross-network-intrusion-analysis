@@ -1,0 +1,11 @@
+attack_label,source_dataset,flows_raw,rows_clean,flows_represented,attack_family
+Backdoor,ToN,203384,20641,101692,Malware and botnets
+Benign,ToN,16792214,2282642,15078514,Benign
+DDoS,ToN,4141256,451474,4141256,Denial of service
+DoS,ToN,203456,121803,203456,Denial of service
+Injection,ToN,381777,333652,365308,Web and injection
+MITM,ToN,6013,4951,5268,Interception and spoofing
+Password,ToN,1594777,697124,1594777,Credential attacks
+Ransomware,ToN,3971,2830,3971,Malware and botnets
+Scanning,ToN,1358977,225074,1358977,Reconnaissance
+XSS,ToN,2834435,1497451,1589551,Web and injection

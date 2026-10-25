@@ -1,0 +1,12 @@
+step,decision,rows,columns,what
+0 load,-,20115529,55,raw file
+1 drop SECOND_BYTES,C3,20115529,53,2 columns removed
+2 split L7_PROTO,C3,20115529,54,L7_PROTO -> L7_MAIN + L7_SUB = 0
+3 exact duplicates,C4,19487055,54,"628,474 copies removed"
+4 two labels,C5,19486175,54,880 rows removed
+5 SlowHTTPTest,C6,19380595,54,"105,580 rows removed"
+6 attack = Benign behaviour,C7,19285037,54,"95,558 rows removed"
+7 collapse behaviours,section 6,8945792,55,repeats -> one row + count
+8 clean(),M3 + shared rule,8945792,53,IP columns dropped; 0 rows lost
+9 map_labels + drop Label,"C1, C2",8945792,56,"4 label columns added, Label dropped"
+10 final,-,8945792,56,cleaned table

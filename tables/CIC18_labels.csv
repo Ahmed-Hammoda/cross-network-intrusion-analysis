@@ -1,0 +1,16 @@
+attack_label,source_dataset,flows_raw,rows_clean,flows_represented,attack_family
+Benign,CIC18,17514626,8178232,17392754,Benign
+Bot,CIC18,207703,2804,111460,Malware and botnets
+DDoS HOIC,CIC18,1032311,244060,1032311,Denial of service
+DDoS LOIC-HTTP,CIC18,288589,265826,280264,Denial of service
+DDoS LOIC-UDP,CIC18,3450,1723,1725,Denial of service
+DoS GoldenEye,CIC18,61300,27410,30650,Denial of service
+DoS Hulk,CIC18,100076,100071,100075,Denial of service
+DoS SlowHTTPTest,CIC18,105550,0,0,Denial of service
+DoS Slowloris,CIC18,36040,3510,18020,Denial of service
+FTP brute force,CIC18,386720,1,193360,Credential attacks
+Infiltration,CIC18,188152,27213,29209,Exploitation and intrusion
+SQL injection,CIC18,440,53,54,Web and injection
+SSH brute force,CIC18,188474,93979,94207,Credential attacks
+Web brute force,CIC18,1618,910,948,Credential attacks
+XSS,CIC18,480,0,0,Web and injection

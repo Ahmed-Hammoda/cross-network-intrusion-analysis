@@ -1,0 +1,9 @@
+step,decision,rows,columns,what
+0 load,-,2365424,55,raw file
+1 drop SECOND_BYTES,U2,2365424,53,2 columns removed
+2 split L7_PROTO,U3,2365424,54,L7_PROTO -> L7_MAIN + L7_SUB
+3 exact duplicates,U4,2350609,54,"14,815 copies removed"
+4 collapse behaviours,section 6,1405100,55,repeats -> one row + count
+5 clean(),M3 + shared rule,1405100,53,IP columns dropped; 0 rows lost
+6 map_labels + drop Label,"U5, U6",1405100,56,"4 label columns added, Label dropped"
+8 final,-,1405100,56,cleaned table

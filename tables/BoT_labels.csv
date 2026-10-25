@@ -1,0 +1,6 @@
+attack_label,source_dataset,flows_raw,rows_clean,flows_represented,attack_family
+Benign,BoT,51989,21951,51989,Benign
+DDoS,BoT,7150882,287453,7150882,Denial of service
+DoS,BoT,8034190,354734,8034190,Denial of service
+Reconnaissance,BoT,1695132,898729,1695132,Reconnaissance
+Theft,BoT,1615,448,1615,Data theft

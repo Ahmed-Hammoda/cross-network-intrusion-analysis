@@ -1,0 +1,39 @@
+source_dataset,attack_family,attack_label,rows,flows,ambiguous_rows
+BoT,Benign,Benign,21951,51989,23
+BoT,Data theft,Theft,448,1615,2
+BoT,Denial of service,DDoS,287453,7150882,5
+BoT,Denial of service,DoS,354734,8034190,2
+BoT,Reconnaissance,Reconnaissance,898728,1695132,15664
+CIC18,Benign,Benign,8178232,17392754,1864
+CIC18,Credential attacks,FTP brute force,1,193360,0
+CIC18,Credential attacks,SSH brute force,93979,94207,0
+CIC18,Credential attacks,Web brute force,910,948,0
+CIC18,Denial of service,DDoS HOIC,244060,1032311,0
+CIC18,Denial of service,DDoS LOIC-HTTP,265826,280264,0
+CIC18,Denial of service,DDoS LOIC-UDP,1723,1725,0
+CIC18,Denial of service,DoS GoldenEye,27410,30650,0
+CIC18,Denial of service,DoS Hulk,100071,100075,0
+CIC18,Denial of service,DoS Slowloris,3510,18020,0
+CIC18,Exploitation and intrusion,Infiltration,27213,29209,339
+CIC18,Malware and botnets,Bot,2804,111460,0
+CIC18,Web and injection,SQL injection,53,54,0
+ToN,Benign,Benign,2282642,15078514,17402
+ToN,Credential attacks,Password,697124,1594777,49
+ToN,Denial of service,DDoS,451474,4141256,99
+ToN,Denial of service,DoS,121803,203456,296
+ToN,Interception and spoofing,MITM,4951,5268,9
+ToN,Malware and botnets,Backdoor,20641,101692,44
+ToN,Malware and botnets,Ransomware,2830,3971,5
+ToN,Reconnaissance,Scanning,225074,1358977,2641
+ToN,Web and injection,Injection,333652,365308,4
+ToN,Web and injection,XSS,1497451,1589551,5
+UNSW,Benign,Benign,1307351,2222930,0
+UNSW,Denial of service,DoS,5360,5971,0
+UNSW,Exploitation and intrusion,Exploits,40424,42744,0
+UNSW,Exploitation and intrusion,Shellcode,2316,2381,0
+UNSW,Fuzzing and crypto,Fuzzers,26987,33816,0
+UNSW,Fuzzing and crypto,Generic,5726,19651,0
+UNSW,Malware and botnets,Backdoor,3656,4658,0
+UNSW,Malware and botnets,Worms,146,158,0
+UNSW,Reconnaissance,Analysis,1226,1226,0
+UNSW,Reconnaissance,Reconnaissance,11908,17074,0

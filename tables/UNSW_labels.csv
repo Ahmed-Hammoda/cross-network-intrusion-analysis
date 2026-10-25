@@ -1,0 +1,11 @@
+attack_label,source_dataset,flows_raw,rows_clean,flows_represented,attack_family
+Analysis,UNSW,1226,1226,1226,Reconnaissance
+Backdoor,UNSW,4659,3656,4658,Malware and botnets
+Benign,UNSW,2237731,1307351,2222930,Benign
+DoS,UNSW,5980,5360,5971,Denial of service
+Exploits,UNSW,42748,40424,42744,Exploitation and intrusion
+Fuzzers,UNSW,33816,26987,33816,Fuzzing and crypto
+Generic,UNSW,19651,5726,19651,Fuzzing and crypto
+Reconnaissance,UNSW,17074,11908,17074,Reconnaissance
+Shellcode,UNSW,2381,2316,2381,Exploitation and intrusion
+Worms,UNSW,158,146,158,Malware and botnets

@@ -83,6 +83,19 @@ TAXONOMY = {
     "Generic": ("Generic", "Fuzzing and crypto"),
     "Theft": ("Theft", "Data theft"),
 
+    # --- NF-CSE-CIC-IDS2018-v3 detailed labels (approved decision C1); the tool name is kept in attack_label ---
+    "DDOS_attack-HOIC": ("DDoS HOIC", "Denial of service"),
+    "DDoS_attacks-LOIC-HTTP": ("DDoS LOIC-HTTP", "Denial of service"),
+    "DDOS_attack-LOIC-UDP": ("DDoS LOIC-UDP", "Denial of service"),
+    "DoS_attacks-Hulk": ("DoS Hulk", "Denial of service"),
+    "DoS_attacks-GoldenEye": ("DoS GoldenEye", "Denial of service"),
+    "DoS_attacks-Slowloris": ("DoS Slowloris", "Denial of service"),
+    "DoS_attacks-SlowHTTPTest": ("DoS SlowHTTPTest", "Denial of service"),  # removed by C6, mapped for completeness
+    "FTP-BruteForce": ("FTP brute force", "Credential attacks"),
+    "SSH-Bruteforce": ("SSH brute force", "Credential attacks"),
+    "Brute_Force_-Web": ("Web brute force", "Credential attacks"),
+    "Brute_Force_-XSS": ("XSS", "Web and injection"),
+
     # --- CICIoT2023 labels (verify exact spellings on load; add any missing ones here) ---
     "BenignTraffic": (BENIGN, BENIGN),
     "DDoS-ACK_Fragmentation": ("DDoS ACK fragmentation", "Denial of service"),
@@ -132,7 +145,30 @@ _TAXONOMY_NORM = {_norm(k): v for k, v in TAXONOMY.items()}
 # 4. Cleaning and sampling rules (identical for every dataset)
 # ---------------------------------------------------------------------------
 RANDOM_STATE = 42
+# Superseded for the four NetFlow datasets by collapse_behaviours() (approved plan, see
+# report/data_problems/phase2_data_problems.pdf, section 6). Kept for the CICIoT2023 notebook.
 SAMPLE_CAP_PER_LABEL = 200_000   # keep every flow of a label below this, sample this many above it
+
+# NetFlow columns that are NOT part of a flow's behaviour: identifiers and time (who / when), the targets,
+# and the columns removed by the approved after-merge decisions (U2/C3/T3/B2, M7, M8). Two flows whose other
+# columns are all equal show the same behaviour.
+NETFLOW_NOT_BEHAVIOUR = ["IPV4_SRC_ADDR", "IPV4_DST_ADDR", "L4_SRC_PORT", "FLOW_START_MILLISECONDS",
+                         "FLOW_END_MILLISECONDS", "DNS_QUERY_ID", "Label", "Attack",
+                         "SRC_TO_DST_SECOND_BYTES", "DST_TO_SRC_SECOND_BYTES", "MIN_IP_PKT_LEN", "MAX_IP_PKT_LEN",
+                         "TCP_FLAGS", "ICMP_IPV4_TYPE"]
+
+# Columns added by the cleaning and the merge that describe a row, not a flow's behaviour.
+META_COLUMNS = ["count", "source_dataset", "attack_label", "attack_family", "is_attack", "network_type",
+                "ambiguous_across_sources"]
+
+# NetFlow code columns: identifiers stored as numbers, treated as categories (approved decision M1).
+CODE_COLUMNS = ["L4_SRC_PORT", "L4_DST_PORT", "PROTOCOL", "L7_MAIN", "L7_SUB", "CLIENT_TCP_FLAGS", "SERVER_TCP_FLAGS",
+                "ICMP_TYPE", "DNS_QUERY_TYPE", "FTP_COMMAND_RET_CODE"]
+
+# Columns kept in the merged data but never used as model features: time (M2), host fingerprints (M4: TTL),
+# random identifiers (M5), dataset fingerprint (M10: FTP code), the targets and the meta columns.
+NOT_FEATURES = ["FLOW_START_MILLISECONDS", "FLOW_END_MILLISECONDS", "L4_SRC_PORT", "DNS_QUERY_ID", "MIN_TTL", "MAX_TTL",
+                "FTP_COMMAND_RET_CODE", "Attack"] + META_COLUMNS
 
 # Identifier columns dropped from the cleaned files (they identify machines, not behaviour).
 # Names are matched case-insensitively; missing ones are ignored.
@@ -285,6 +321,63 @@ def quality_report(stats: dict, before: pd.DataFrame, after: pd.DataFrame, sourc
     labels["attack_family"] = labels.index.map(
         lambda l: before.loc[before["attack_label"] == l, "attack_family"].iloc[0]
     )
+    labels.insert(0, "source_dataset", source)
+    labels.index.name = "attack_label"
+    labels.to_csv(TABLE_DIR / f"{source}_labels.csv")
+    return labels
+
+
+def behaviour_hash(df: pd.DataFrame, exclude: list = NETFLOW_NOT_BEHAVIOUR) -> np.ndarray:
+    """64-bit fingerprint of every row's behaviour (all columns except `exclude`).
+
+    Each column is hashed as float64, so the same value gives the same hash in every dataset. ICMP_TYPE counts
+    as 0 outside ICMP (1) and ICMPv6 (58), as the approved decision M6 sets it.
+    """
+    h = np.zeros(len(df), dtype=np.uint64)
+    for c in [c for c in df.columns if c not in exclude]:
+        col = df[c].to_numpy(dtype="float64")
+        if c == "ICMP_TYPE" and "PROTOCOL" in df.columns:
+            col = np.where(df["PROTOCOL"].isin([1, 58]).to_numpy(), col, 0.0)
+        h = h * np.uint64(1000003) ^ pd.util.hash_array(col)
+    return h
+
+
+def collapse_behaviours(df: pd.DataFrame, label_col: str = NETFLOW_LABEL_COL,
+                        exclude: list = NETFLOW_NOT_BEHAVIOUR, keep: np.ndarray | None = None) -> pd.DataFrame:
+    """One row per (behaviour, label): exact repeats of a behaviour are collapsed into their first row, and a
+    `count` column says how many flows that row stands for. Nothing different is lost.
+
+    keep: optional boolean mask of the rows to use (rows marked False are ignored). It lets very large datasets
+    mark their removals instead of copying the whole table after each step.
+
+    `count` is never a model feature and never the raw training weight (that would bring the repeats back);
+    it is used for evaluation on the traffic as it occurred. Approved plan, PDF section 6.
+    """
+    h = behaviour_hash(df, exclude)
+    y = df[label_col].to_numpy()
+    pos = np.arange(len(df)) if keep is None else np.flatnonzero(keep)
+    key = pd.DataFrame({"h": h[pos], "y": y[pos]})
+    first = ~key.duplicated(["h", "y"]).to_numpy()
+    count = key.groupby(["h", "y"], sort=False)["h"].transform("size").to_numpy()
+    out = df.iloc[pos[first]].copy()
+    out["count"] = count[first].astype("int64")
+    return out
+
+
+def cleaning_report(steps: list, raw_labels: pd.Series, clean_df: pd.DataFrame, source: str) -> pd.DataFrame:
+    """Save the before/after evidence of the cleaning.
+
+    tables/{source}_quality.csv : one row per step (rows and columns after the step, what it did)
+    tables/{source}_labels.csv  : per label, raw flows, rows kept and flows they stand for (sum of `count`)
+    """
+    pd.DataFrame(steps).to_csv(TABLE_DIR / f"{source}_quality.csv", index=False)
+    labels = pd.DataFrame({
+        "flows_raw": raw_labels,
+        "rows_clean": clean_df.groupby("attack_label", observed=True).size(),
+        "flows_represented": clean_df.groupby("attack_label", observed=True)["count"].sum(),
+    }).fillna(0).astype(int)
+    family = {label: fam for label, fam in TAXONOMY.values()}   # also covers labels removed entirely by the cleaning
+    labels["attack_family"] = labels.index.map(family)
     labels.insert(0, "source_dataset", source)
     labels.index.name = "attack_label"
     labels.to_csv(TABLE_DIR / f"{source}_labels.csv")

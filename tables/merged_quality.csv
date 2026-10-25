@@ -1,0 +1,9 @@
+step,decision,rows,columns,what
+2 stack,-,17551849,57,"four files stacked, network_type added"
+3 ICMP fields,M6,17551849,57,"2,879,966 rows set to 0"
+4a DNS TTL,M9,17551849,57,14 values set to 0
+4b re-collapse,section 6,17551848,57,1 rows merged into others
+5 copy columns,"M7, M8",17551848,53,4 columns dropped
+6 ambiguous flag,M11,17551848,54,"38,453 rows flagged, none removed"
+7 types,"M1, M2",17551848,54,"10 code columns categorical, 2 timestamps datetime"
+8 final,-,17551848,54,merged table

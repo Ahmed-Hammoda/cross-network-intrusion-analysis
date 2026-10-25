@@ -102,15 +102,15 @@ Apply the solutions planned in phase 2, with before/after evidence for every ste
 | 4.1 | Distributions of key variables (log scale) and descriptive statistics per family and per source | Cyrine Chabbar | ⬜ To do |
 | 4.2 | Correlation analysis / heatmap of numeric features | Ahmed Hamouda | ⬜ To do |
 | 4.3 | Relationships between features and the target (`is_attack`, `attack_family`) | Cyrine Chabbar | ⬜ To do |
-| 4.4 | Interesting patterns and trends (per family, per network) | Yassine Mtibaa | ⬜ To do |
+| 4.4 | Interesting patterns and trends (per family, per network) | Yassine Mtibaa | ✅ Done (IoT23: flag fingerprints, DoS vs DDoS, separability — `07_eda_iot23`) |
 | 4.5 | Justified hypothesis tests with interpretation: | | |
-| | · Normality check (justifies non-parametric tests) | Yassine Mtibaa | ⬜ To do |
+| | · Normality check (justifies non-parametric tests) | Yassine Mtibaa | ✅ Done (rejected everywhere → non-parametric) |
 | | · Mann–Whitney U: benign vs attack, with effect size (SQ1) | Ahmed Hamouda | ⬜ To do |
 | | · Kruskal–Wallis + Dunn post-hoc: across families (SQ1) | Cyrine Chabbar | ⬜ To do |
-| | · Chi-square: protocol × family (SQ1) | Yassine Mtibaa | ⬜ To do |
+| | · Chi-square: protocol × family (SQ1) | Yassine Mtibaa | ✅ Done (IoT23: V = 0.43) |
 | | · Kolmogorov–Smirnov: same attack across networks (SQ2) | Ahmed Hamouda | ⬜ To do |
 | 4.6 | Class imbalance analysis (SQ3) | Cyrine Chabbar | ⬜ To do |
-| 4.7 | CICIoT2023 EDA, compared to NetFlow at family level | Yassine Mtibaa | ⬜ To do |
+| 4.7 | CICIoT2023 EDA, compared to NetFlow at family level | Yassine Mtibaa | 🔄 IoT23 EDA done; NetFlow comparison runs once the cleaned NetFlow files exist |
 
 ## Phase 5 — Feature engineering (Tue)
 

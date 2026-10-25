@@ -1,0 +1,1888 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=2cm]{geometry}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{needspace}
+\usepackage[hidelinks]{hyperref}
+\definecolor{accent}{HTML}{0F6B72}
+\definecolor{muted}{HTML}{55666D}
+\definecolor{warn}{HTML}{8A4B08}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+\setcounter{tocdepth}{3}
+\newcommand{\fit}[1]{\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{#1}}
+\newcommand{\meta}[2]{{\small\color{muted}\textbf{Check:} #1 \quad\textbar\quad \textbf{Size:} #2}}
+\newcommand{\example}{{\small\color{muted}\textbf{Example from the data}}\par}
+\newcommand{\decision}[1]{\textcolor{accent}{\textbf{Decision:}} #1\par}
+\newcommand{\why}[1]{{\small\color{warn}\textbf{Why before the merge:} #1}\par}
+\newcommand{\whyafter}[1]{{\small\color{warn}\textbf{Why after the merge:} #1}\par}
+\newcommand{\other}[1]{{\small\color{muted}\textbf{Other datasets:} #1}\par}
+% each problem is one unbreakable block: it never starts on one page and ends on the next
+\newenvironment{problem}{\par\noindent\begin{minipage}{\linewidth}\setlength{\parskip}{4pt}}{\end{minipage}\par\bigskip}
+% a planned break inside a block that is taller than one page
+\newcommand{\problembreak}{\end{minipage}\par\noindent\begin{minipage}{\linewidth}\setlength{\parskip}{4pt}{\small\color{muted}\textit{(continued)}}\par}
+\widowpenalty=10000
+\clubpenalty=10000
+\renewcommand{\arraystretch}{1.15}
+\title{Data quality problems of the four NetFlow datasets\\[2pt]\large What we fix before the merge, and what we fix after it}
+\author{Ahmed Hamouda \\ \small with the ToN-IoT and BoT-IoT cross-check by Cyrine Chabbar}
+\date{Phase 2 (data understanding) and phase 3 (cleaning)}
+\begin{document}
+\maketitle
+
+\section*{How to read this document}
+\addcontentsline{toc}{section}{How to read this document}
+This document lists every data quality problem found in the four NetFlow v3 datasets (NF-UNSW-NB15,
+NF-CSE-CIC-IDS2018, NF-ToN-IoT and NF-BoT-IoT), the evidence for it, and the decision taken. All four datasets were
+examined with the same checks, Steps 0--8 of phase 2 (notebooks \texttt{01\_unsw}, \texttt{02\_cic18}, \texttt{03\_ton},
+\texttt{04\_bot}). The team approved every decision, and phase 3 applied them (notebooks \texttt{01\_unsw\_cleaning} to
+\texttt{04\_bot\_cleaning} and \texttt{06\_merge\_netflow}); where the cleaning measured a slightly different number,
+the entry says so.
+
+\textbf{Where each problem is listed.} Every problem appears once, in the place where it is solved:
+\begin{itemize}
+\item \textbf{Sections 1--4, inside one dataset, before the merge.} Problems that remove or keep \emph{rows}, problems that
+exist in only that dataset, and differences that would stop the four files from being stacked (column types, label names).
+\item \textbf{Section 5, on the merged table.} Problems shared by several datasets that one rule solves for all of them
+(column changes, value rules, which columns a model may use), and problems that only appear once the datasets are together.
+\item \textbf{Section 6, the plan.} How the cleaned data is reduced, balanced, split and evaluated, with its numbers.
+\end{itemize}
+
+\textbf{How each entry is organised.} Each section first gives the \textbf{decisions that change the data} (rows removed,
+values corrected, columns dropped or kept out of the model), then the \textbf{decisions to keep it as it is} (the problem
+is documented and nothing changes). Every entry shows the notebook \textbf{check} that found it, its \textbf{size}, a short
+explanation, a real example taken from the data, and the \textbf{decision} with its reason. \textbf{Row} in an example is
+the position of the flow in the original CSV file (the first data row is 0).
+
+\textbf{The order of phase 3.} For each dataset: its own before-merge decisions $\rightarrow$ one row per different
+behaviour, with a \texttt{count} of the flows it stands for $\rightarrow$ \texttt{clean()} $\rightarrow$
+\texttt{map\_labels()} $\rightarrow$ save. Then the four files are stacked and the after-merge decisions are applied once.
+
+\textbf{Cross-check.} NF-ToN-IoT-v3 and NF-BoT-IoT-v3 were analysed independently by Cyrine Chabbar and Ahmed Hamouda.
+Cyrine's notebooks are the main \texttt{03\_ton} and \texttt{04\_bot}, completed with the checks that only Ahmed's
+analysis had (marked \emph{added from Ahmed Hamouda's analysis}). Every count measured in both analyses is identical.
+Cyrine's checks added four rules, now applied to all four datasets (K17, K18 and the exceptions in M7 and K7), and a
+documentation error (K16). Both analyses reached, on their own, the decision not to remove the ToN-IoT and BoT-IoT attack
+flows that look like Benign (T6, B7).
+
+\begin{center}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Dataset} & \textbf{Flows} & \textbf{Attack share} & \textbf{Change} & \textbf{Keep} \\
+\midrule
+NF-UNSW-NB15-v3 & 2,365,424 & 5.4\% & 4 & 4 \\
+NF-CSE-CIC-IDS2018-v3 & 20,115,529 & 12.9\% & 7 & 3 \\
+NF-ToN-IoT-v3 & 27,520,260 & 39.0\% & 5 & 4 \\
+NF-BoT-IoT-v3 & 16,933,808 & 99.7\% & 3 & 4 \\
+\midrule
+After the merge & & & 12 & 18 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\newpage
+{\setlength{\parskip}{0pt}\tableofcontents}
+\newpage
+\section{NF-UNSW-NB15-v3 (2,365,424 flows) -- before the merge}
+\subsection{Decisions that change the data}
+\begin{problem}
+\subsubsection*{U1. Strong class imbalance}
+\addcontentsline{toc}{subsubsection}{U1. Strong class imbalance}
+\meta{1.4 class distribution}{Benign 94.6\% (17.5 benign flows per attack flow)}
+
+Almost every flow is Benign. A model that always answers "Benign" would already be 94.6\% accurate and still miss every attack.
+
+Many flows are repeats of the same behaviour. Keeping each different behaviour once leaves 1,307,351 Benign and 97,749 attack rows, and no pattern is lost.
+
+\example
+\begin{center}\fit{\begin{tabular}{lll}
+\toprule
+\textbf{Attack} & \textbf{flows} & \textbf{different behaviours kept} \\
+\midrule
+Benign & 2,237,731 & 1,307,351 \\
+Exploits & 42,748 & 40,424 \\
+Fuzzers & 33,816 & 26,987 \\
+Generic & 19,651 & 5,726 \\
+Reconnaissance & 17,074 & 11,908 \\
+DoS & 5,980 & 5,360 \\
+Backdoor & 4,659 & 3,656 \\
+Shellcode & 2,381 & 2,316 \\
+Analysis & 1,226 & 1,226 \\
+Worms & 158 & 146 \\
+total & 2,365,424 & 1,405,100 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Delete nothing by hand. Inside the dataset, exact repeats of a behaviour are collapsed into one row with a \texttt{count} column, so every different behaviour is kept (section 6). Training balances classes and networks with weights; models are judged with macro-F1, per-class recall and a realistic 95\% / 5\% test set, not accuracy.}
+\why{The table of different behaviours (one row each, with its repeat count) is built inside each dataset, after its own removals and before the four files are stacked (section 6).}
+\other{CIC-2018 (Benign 87.1\%), ToN-IoT (61.0\%); BoT-IoT is the opposite (Benign 0.3\%).}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{U2. Missing and infinite values in the \texttt{...\_\allowbreak{}SECOND\_\allowbreak{}BYTES} columns}
+\addcontentsline{toc}{subsubsection}{U2. Missing and infinite values in the \texttt{...\_\allowbreak{}SECOND\_\allowbreak{}BYTES} columns}
+\meta{3.1--3.4 NaN / inf, cause and class}{63,425 NaN + 181,561 inf; 75.8\% of Generic}
+
+Both columns are a byte count divided by the flow duration. When the duration is 0 ms (122,493 flows), the division gives NaN (0 $\div$ 0) or infinity (bytes $\div$ 0).
+
+Check 3.3 also showed the columns are mislabelled: the values are bytes per \textbf{millisecond}, not per second, and the two directions are swapped.
+
+The missing values are not random: 75.8\% of Generic flows are affected, but only 3.9\% of Benign.
+
+Nothing is lost by dropping them: \texttt{SRC\_\allowbreak{}TO\_\allowbreak{}DST\_\allowbreak{}AVG\_\allowbreak{}THROUGHPUT} (IN bytes $\times$ 8 $\div$ duration) and \texttt{DST\_\allowbreak{}TO\_\allowbreak{}SRC\_\allowbreak{}AVG\_\allowbreak{}THROUGHPUT} (OUT bytes $\times$ 8 $\div$ duration) measure the same speed per direction, correctly named, in bits per second, and never NaN or infinite (the exporter divides by the duration + 1 ms). Each \texttt{SECOND\_\allowbreak{}BYTES} column matches the throughput of the \textbf{opposite} name (correlation 0.996 in UNSW), about 8,000 times smaller (8 bits $\times$ 1,000 ms), as the second table shows for row 588977 (701 bytes in, 1,052 bytes out, 63 ms).
+
+\example
+\begin{center}\fit{\begin{tabular}{lllllll}
+\toprule
+\textbf{Row} & \texttt{IN\_BYTES} & \texttt{OUT\_BYTES} & \texttt{FLOW\_DURATION\_MILLISECONDS} & \texttt{SRC\_TO\_DST\_SECOND\_BYTES} & \texttt{DST\_TO\_SRC\_SECOND\_BYTES} & \textbf{Attack} \\
+\midrule
+40 & 1,064 & 0 & 0 & NaN & inf & Fuzzers \\
+63 & 130 & 162 & 0 & inf & inf & Benign \\
+\bottomrule
+\end{tabular}}\end{center}
+\begin{center}\fit{\begin{tabular}{ll}
+\toprule
+\textbf{Attack} & \textbf{\% of the class with NaN or inf} \\
+\midrule
+Generic & 75.8 \\
+Reconnaissance & 33.9 \\
+Shellcode & 33.4 \\
+Backdoor & 25.9 \\
+\bottomrule
+\end{tabular}}\end{center}
+\begin{center}\fit{\begin{tabular}{llllllll}
+\toprule
+\textbf{Row} & \texttt{IN\_BYTES} & \texttt{OUT\_BYTES} & \texttt{FLOW\_DURATION\_MILLISECONDS} & \texttt{SRC\_TO\_DST\_SECOND\_BYTES} & \texttt{DST\_TO\_SRC\_AVG\_THROUGHPUT} & \texttt{DST\_TO\_SRC\_SECOND\_BYTES} & \texttt{SRC\_TO\_DST\_AVG\_THROUGHPUT} \\
+\midrule
+588977 & 701 & 1,052 & 63 & 16.698 & 131,500 & 11.127 & 87,625 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{\textbf{Drop both columns} before \texttt{clean()} runs. No imputation and no row deletion.}
+\why{\texttt{clean()} deletes every row that still has a NaN, and it runs on each dataset before the merge. The columns must therefore be dropped first, in this dataset. Otherwise 75.8\% of the Generic class would silently disappear.}
+\other{BoT-IoT has the same NaN/inf (it would lose 65\% of its Benign); CIC-2018 and ToN-IoT store the columns as integers without NaN, but with the same wrong formula.}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{U3. \texttt{L7\_\allowbreak{}PROTO} stores two codes in one decimal number}
+\addcontentsline{toc}{subsubsection}{U3. \texttt{L7\_\allowbreak{}PROTO} stores two codes in one decimal number}
+\meta{2.4 \texttt{L7\_\allowbreak{}PROTO} decimals + raw CSV text}{23,866 flows with a sub-code, 8 ambiguous}
+
+\texttt{L7\_\allowbreak{}PROTO} holds nDPI protocol identifiers. The numbers are documented in nDPI's \texttt{ndpi\_\allowbreak{}protocol\_\allowbreak{}ids.h} (github.com/ntop/nDPI): 7 = HTTP, 37 = BitTorrent, 10 = NetBIOS, 16 = SMBv1, 253 = SOAP, 376 = WebDAV. nDPI describes a flow by a \emph{master} protocol (the carrier) and an \emph{application} protocol (what runs inside it), written with a dot in protocol names such as \texttt{TLS.YouTube}.
+
+We therefore read \texttt{7.37} as "BitTorrent carried over HTTP". The numeric dot format is not described in an official document, so this reading is an interpretation, but the data supports it: the \texttt{7.37} flow below goes to port 80 (HTTP), \texttt{10.16} to port 445 (SMB), and SOAP (253) is a protocol that runs inside HTTP.
+
+Because the column is a float, trailing zeros were lost when the dataset was written: \texttt{7.5} can be HTTP+DNS (5) or HTTP+RTSP (50). This affects 8 flows (all \texttt{7.5}; the phase 2 notebook estimated 10, the cleaning counted exactly). CIC-2018 and ToN-IoT store the same column as an integer.
+
+\example
+\begin{center}\fit{\begin{tabular}{llllll}
+\toprule
+\textbf{Row} & \textbf{PROTOCOL} & \texttt{L4\_DST\_PORT} & \texttt{L7\_PROTO} & \textbf{Attack} & \textbf{raw text in the CSV} \\
+\midrule
+302 & 6 & 445 & 10.16 & Exploits & 10.16 \\
+1036 & 6 & 80 & 7.37 & Benign & 7.37 \\
+4035 & 6 & 7001 & 7.253 & Exploits & 7.253 \\
+34960 & 6 & 80 & 7.5 & Generic & 7.5 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Split into two integer columns before the merge: \texttt{L7\_\allowbreak{}MAIN} (before the dot, always reliable) and \texttt{L7\_\allowbreak{}SUB} (after the dot, 0 if none). Document the 8 ambiguous flows.}
+\why{A merged column must have one type and one meaning. The fix needs this dataset's own values, so it is done before the files are stacked. The split needs the raw text of this file.}
+\other{BoT-IoT has the same decimals (1,851 flows, including 796 ambiguous \texttt{7.5}); CIC-2018 and ToN-IoT only need \texttt{L7\_\allowbreak{}SUB = 0}.}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{U4. Exact duplicate rows}
+\addcontentsline{toc}{subsubsection}{U4. Exact duplicate rows}
+\meta{5.1 exact duplicates}{14,815 rows (0.63\%), 14,801 of them Benign}
+
+These rows are identical in all 55 columns, including the IP addresses and the start time in milliseconds. They are the same flow written twice. They add no information and could end up in both the training and the test set, which makes the model look better than it is.
+
+\example
+\begin{center}\fit{\begin{tabular}{lllllll}
+\toprule
+\textbf{Row} & \texttt{FLOW\_START\_MILLISECONDS} & \texttt{IPV4\_SRC\_ADDR} & \texttt{L4\_SRC\_PORT} & \texttt{L4\_DST\_PORT} & \texttt{IN\_BYTES} & \textbf{Attack} \\
+\midrule
+2305 & 1424239673765 & 149.171.126.18 & 1043 & 53 & 132 & Benign \\
+2306 & 1424239673765 & 149.171.126.18 & 1043 & 53 & 132 & Benign \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Remove them, keeping the first copy (shared \texttt{clean()} rule).}
+\why{It removes or keeps rows of this dataset only, and has to happen before the table of different behaviours is built (section 6); otherwise wrong rows would be counted as real behaviours.}
+\other{CIC-2018 (628,474, whole attack captures recorded twice), ToN-IoT (1,816,137); none in BoT-IoT.}
+\end{problem}
+
+\needspace{20\baselineskip}\subsection{Decisions to keep it as it is}
+\begin{problem}
+\subsubsection*{U5. Very rare class: Worms}
+\addcontentsline{toc}{subsubsection}{U5. Very rare class: Worms}
+\meta{1.4 class distribution}{158 flows (0.007\%)}
+
+Worms is real attack traffic but too small to learn reliably at label level. The two next smallest labels are also small.
+
+\example
+\begin{center}\fit{\begin{tabular}{ll}
+\toprule
+\textbf{Attack} & \textbf{flows} \\
+\midrule
+Worms & 158 \\
+Analysis & 1,226 \\
+Shellcode & 2,381 \\
+Backdoor & 4,659 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Keep every flow; give the class a higher training weight. Report results also at family level: Worms + Backdoor = \emph{Malware and botnets}, 4,817 flows.}
+\why{Rare labels are a property of this dataset; removing them would lose the only Worms data of the project.}
+\other{Theft in BoT-IoT (1,615), SQL injection / XSS in CIC-2018 (440 / 480), MITM / Ransomware in ToN-IoT.}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{U6. Only 6 of the 9 attack families are present}
+\addcontentsline{toc}{subsubsection}{U6. Only 6 of the 9 attack families are present}
+\meta{1.3 taxonomy mapping}{4 families missing}
+
+UNSW has no Credential attacks, Web and injection, Interception and spoofing or Data theft. It is, however, the only source of Fuzzing and crypto (Fuzzers, Generic) and of Exploits and Shellcode.
+
+\example
+\begin{center}\fit{\begin{tabular}{ll}
+\toprule
+\textbf{Family} & \textbf{flows} \\
+\midrule
+Benign & 2,237,731 \\
+Fuzzing and crypto & 53,467 \\
+Exploitation and intrusion & 45,129 \\
+Reconnaissance & 18,300 \\
+Denial of service & 5,980 \\
+Malware and botnets & 4,817 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{No change to the data. Documented: the missing families come from the other datasets.}
+\why{It describes what this dataset can teach.}
+\other{Each NetFlow dataset covers a different set of families (see M12).}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{U7. Invalid codes, all in attack traffic}
+\addcontentsline{toc}{subsubsection}{U7. Invalid codes, all in attack traffic}
+\meta{2.5 invalid codes}{754 flows with unassigned protocol numbers + 6 port 0 + 6 invalid DNS + 6 invalid ICMP types}
+
+Protocol numbers 148--252 are not assigned by IANA, port 0 is reserved, and some DNS/ICMP type values do not exist. Normally these would be recording errors.
+
+Here \textbf{no Benign flow} uses them: 620 of the 754 unassigned-protocol flows are Fuzzers, which send random, malformed packets on purpose. The invalid value \emph{is} the attack.
+
+\example
+\begin{center}\fit{\begin{tabular}{lllll}
+\toprule
+\textbf{Row} & \textbf{PROTOCOL} & \texttt{IN\_PKTS} & \texttt{IN\_BYTES} & \textbf{Attack} \\
+\midrule
+104904 & 246 & 2 & 200 & Fuzzers \\
+104922 & 247 & 2 & 200 & Fuzzers \\
+104943 & 248 & 2 & 200 & Fuzzers \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Keep them unchanged.}
+\why{Only UNSW has them, and they belong to its attack classes.}
+\other{ToN-IoT and BoT-IoT have a few invalid codes in Benign traffic (see K7).}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{U8. Same behaviour, different attack label}
+\addcontentsline{toc}{subsubsection}{U8. Same behaviour, different attack label}
+\meta{5.4 behaviour duplicates}{30,907 rows in 993 groups (71\% of Generic); never Benign vs attack}
+
+Leaving out the identifiers (IPs, source port, times), these flows are identical in every column, yet carry different attack labels. In the example, the same 2-packet DNS request with no reply appears 12,860 times as Generic and 230 times as Backdoor.
+
+The label describes the whole attack campaign, while one flow shows only one small step of it: many attacks start with the same probe. No model can separate these flows, so label-level accuracy has a ceiling.
+
+\example
+\begin{center}\fit{\begin{tabular}{lllllllllll}
+\toprule
+\textbf{Row} & \textbf{PROTOCOL} & \texttt{L4\_DST\_PORT} & \texttt{IN\_PKTS} & \texttt{IN\_BYTES} & \texttt{OUT\_PKTS} & \texttt{OUT\_BYTES} & \texttt{FLOW\_DURATION\_MILLISECONDS} & \texttt{CLIENT\_TCP\_FLAGS} & \texttt{SERVER\_TCP\_FLAGS} & \textbf{Attack} \\
+\midrule
+2226 & 17 & 53 & 2 & 114 & 0 & 0 & 0 & 0 & 0 & Generic \\
+156587 & 17 & 53 & 2 & 114 & 0 & 0 & 0 & 0 & 0 & Backdoor \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Keep them. Report results at label level and at family level; the binary task (attack or not) is not affected, because every flow here is an attack.}
+\why{The conflict is between labels of this dataset only.}
+\other{BoT-IoT has the same between DoS and DDoS (B6); ToN-IoT and CIC-2018 also have conflicts with Benign (T6, C7).}
+\end{problem}
+
+\newpage
+\section{NF-CSE-CIC-IDS2018-v3 (20,115,529 flows) -- before the merge}
+\subsection{Decisions that change the data}
+\begin{problem}
+\subsubsection*{C1. Labels missing from the taxonomy, with inconsistent spellings}
+\addcontentsline{toc}{subsubsection}{C1. Labels missing from the taxonomy, with inconsistent spellings}
+\meta{1.1 spellings + 1.3 taxonomy}{11 of 15 labels, 2,208,048 flows}
+
+\texttt{map\_\allowbreak{}labels} stops on 11 labels because they are not in the team taxonomy. Their spelling is also inconsistent: \texttt{DDOS\_\allowbreak{}attack-} next to \texttt{DDoS\_\allowbreak{}attacks-}, \texttt{-Bruteforce} next to \texttt{-BruteForce}, the typo \texttt{Infilteration}, and \texttt{Brute\_\allowbreak{}Force\_\allowbreak{}-XSS} for an XSS attack.
+
+The tool name (HOIC, Hulk, Slowloris, ...) is useful detail, so it is kept in the clean label.
+
+\example
+\begin{center}\fit{\begin{tabular}{llll}
+\toprule
+\textbf{raw label} & \textbf{clean label} & \textbf{family} & \textbf{flows} \\
+\midrule
+DDOS\_attack-HOIC & DDoS HOIC & Denial of service & 1,032,311 \\
+DDoS\_attacks-LOIC-HTTP & DDoS LOIC-HTTP & Denial of service & 288,589 \\
+SSH-Bruteforce & SSH brute force & Credential attacks & 188,474 \\
+Brute\_Force\_-XSS & XSS & Web and injection & 480 \\
+Infilteration & Infiltration & Exploitation and intrusion & 188,152 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Add the mapping to \texttt{config.py} (after team agreement). \texttt{attack\_\allowbreak{}label} gets the clean name, \texttt{attack\_\allowbreak{}family} the family; the raw \texttt{Attack} column is not edited.}
+\why{The four files can only be stacked once every label has one clean name and one family; the spelling of a label is a property of this dataset.}
+\other{ToN-IoT writes its labels in lower case (T1); UNSW and BoT-IoT were already clean.}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{C2. Class imbalance and very large attack classes}
+\addcontentsline{toc}{subsubsection}{C2. Class imbalance and very large attack classes}
+\meta{1.4 class distribution}{Benign 87.1\%; DDoS HOIC 1,032,311}
+
+Benign dominates, and some attack tools produced over a million flows while SQL injection has 440.
+
+After this dataset's removals (C5--C7), keeping each different behaviour once leaves 8,178,232 Benign and 767,560 attack rows. FTP-BruteForce shows why repeats add nothing: 386,720 flows, but one single behaviour (C10).
+
+\example
+\begin{center}\fit{\begin{tabular}{lll}
+\toprule
+\textbf{Attack} & \textbf{flows} & \textbf{different behaviours kept} \\
+\midrule
+Benign & 17,514,626 & 8,178,232 \\
+DDoS HOIC & 1,032,311 & 244,060 \\
+FTP brute force & 386,720 & 1 \\
+DDoS LOIC-HTTP & 288,589 & 265,826 \\
+Bot & 207,703 & 2,804 \\
+SSH brute force & 188,474 & 93,979 \\
+Infiltration & 188,152 & 27,213 \\
+DoS SlowHTTPTest & 105,550 & 0 \\
+DoS Hulk & 100,076 & 100,071 \\
+DoS GoldenEye & 61,300 & 27,410 \\
+DoS Slowloris & 36,040 & 3,510 \\
+DDoS LOIC-UDP & 3,450 & 1,723 \\
+Web brute force & 1,618 & 910 \\
+XSS & 480 & 0 \\
+SQL injection & 440 & 53 \\
+total & 20,115,529 & 8,945,792 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Delete nothing by hand. Inside the dataset, exact repeats of a behaviour are collapsed into one row with a \texttt{count} column, so every different behaviour is kept (section 6). Training balances classes and networks with weights; models are judged with macro-F1, per-class recall and a realistic 95\% / 5\% test set, not accuracy.}
+\why{The table of different behaviours (one row each, with its repeat count) is built inside each dataset, after its own removals and before the four files are stacked (section 6).}
+\other{Same in UNSW (U1) and ToN-IoT (T2); inverted in BoT-IoT (B1).}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{C3. Three columns have a different type than in UNSW and BoT-IoT}
+\addcontentsline{toc}{subsubsection}{C3. Three columns have a different type than in UNSW and BoT-IoT}
+\meta{0.4 column comparison + 3.3 formula}{\texttt{L7\_\allowbreak{}PROTO}, \texttt{SRC\_\allowbreak{}TO\_\allowbreak{}DST\_\allowbreak{}SECOND\_\allowbreak{}BYTES}, \texttt{DST\_\allowbreak{}TO\_\allowbreak{}SRC\_\allowbreak{}SECOND\_\allowbreak{}BYTES}}
+
+The four files have the same 55 columns in the same order, but these three are integers here and decimals in UNSW and BoT-IoT. Stacked as they are, pandas would turn them into floats and mix two representations.
+
+The \texttt{...\_\allowbreak{}SECOND\_\allowbreak{}BYTES} columns also carry the wrong meaning: \texttt{SRC\_\allowbreak{}TO\_\allowbreak{}DST\_\allowbreak{}SECOND\_\allowbreak{}BYTES} is reproduced by \textbf{OUT}\_BYTES $\div$ duration (direction swapped, per millisecond) for 79\% of the flows, as the example shows.
+
+\example
+\begin{center}\fit{\begin{tabular}{lllll}
+\toprule
+\textbf{Column} & \textbf{UNSW} & \textbf{CIC-2018} & \textbf{ToN-IoT} & \textbf{BoT-IoT} \\
+\midrule
+L7\_PROTO & decimal & integer & integer & decimal \\
+SRC\_TO\_DST\_SECOND\_BYTES & decimal & integer & integer & decimal \\
+DST\_TO\_SRC\_SECOND\_BYTES & decimal & integer & integer & decimal \\
+\bottomrule
+\end{tabular}}\end{center}
+\begin{center}\fit{\begin{tabular}{llllllll}
+\toprule
+\textbf{Row} & \texttt{L7\_PROTO} & \texttt{IN\_BYTES} & \texttt{OUT\_BYTES} & \texttt{FLOW\_DURATION\_MILLISECONDS} & \texttt{SRC\_TO\_DST\_SECOND\_BYTES} & \texttt{DST\_TO\_SRC\_SECOND\_BYTES} & \textbf{floor(OUT\_BYTES $\div$ duration)} \\
+\midrule
+4 & 7 & 373 & 700 & 1 & 700 & 373 & 700 \\
+9 & 5 & 73 & 140 & 63 & 2 & 1 & 2 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Drop the two \texttt{...\_\allowbreak{}SECOND\_\allowbreak{}BYTES} columns (as in UNSW U2). Write \texttt{L7\_\allowbreak{}PROTO} as \texttt{L7\_\allowbreak{}MAIN} = the value and \texttt{L7\_\allowbreak{}SUB} = 0, the same representation as UNSW and BoT-IoT.}
+\why{A merged column must have one type and one meaning. The fix needs this dataset's own values, so it is done before the files are stacked.}
+\other{Same in ToN-IoT (T3).}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{C4. Exact duplicate rows: whole attack captures recorded twice}
+\addcontentsline{toc}{subsubsection}{C4. Exact duplicate rows: whole attack captures recorded twice}
+\meta{5.1 exact duplicates}{628,474 rows (3.12\%)}
+
+Every flow of FTP-BruteForce, SSH-Bruteforce, DoS GoldenEye, DoS Slowloris and DDoS LOIC-UDP appears \textbf{exactly twice}, identical in all 55 columns, including the millisecond timestamp. Those capture files were written into the dataset twice.
+
+Kept, these copies would double the weight of these attacks and leak between training and test sets.
+
+\example
+\begin{center}\fit{\begin{tabular}{llllll}
+\toprule
+\textbf{Row} & \texttt{FLOW\_START\_MILLISECONDS} & \texttt{IPV4\_SRC\_ADDR} & \texttt{L4\_SRC\_PORT} & \texttt{L4\_DST\_PORT} & \textbf{Attack} \\
+\midrule
+396828 & 1518618806718 & 18.221.219.4 & 39922 & 21 & FTP-BruteForce \\
+396829 & 1518618806718 & 18.221.219.4 & 39922 & 21 & FTP-BruteForce \\
+\bottomrule
+\end{tabular}}\end{center}
+\begin{center}\fit{\begin{tabular}{ll}
+\toprule
+\textbf{Attack} & \textbf{duplicate rows} \\
+\midrule
+FTP brute force & 193,360 \\
+Benign & 121,872 \\
+Bot & 96,243 \\
+SSH brute force & 94,237 \\
+Infiltration & 72,347 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Remove them, keeping the first copy (shared \texttt{clean()} rule).}
+\why{It removes or keeps rows of this dataset only, and has to happen before the table of different behaviours is built (section 6); otherwise wrong rows would be counted as real behaviours.}
+\other{UNSW (14,815), ToN-IoT (1,816,137); none in BoT-IoT.}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{C5. The same flow carries two different labels}
+\addcontentsline{toc}{subsubsection}{C5. The same flow carries two different labels}
+\meta{5.2 identical flows with a different label}{880 rows}
+
+These rows are identical in every column, including the IP addresses and the millisecond start time, so they are the same flow, yet one copy is labelled XSS and the other SQL injection or web brute force. The three web attacks were run from the same machine against the same server at the same time.
+
+\example
+\begin{center}\fit{\begin{tabular}{lllllll}
+\toprule
+\textbf{Row} & \texttt{FLOW\_START\_MILLISECONDS} & \texttt{IPV4\_SRC\_ADDR} & \texttt{IPV4\_DST\_ADDR} & \texttt{L4\_DST\_PORT} & \texttt{IN\_BYTES} & \textbf{Attack} \\
+\midrule
+10150628 & 1519302310148 & 52.14.77.172 & 172.31.69.28 & 500 & 528 & Web brute force \\
+20115069 & 1519302310148 & 52.14.77.172 & 172.31.69.28 & 500 & 528 & XSS \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Remove \textbf{all} copies of these flows: the correct label cannot be known.}
+\why{It removes or keeps rows of this dataset only, and has to happen before the table of different behaviours is built (section 6); otherwise wrong rows would be counted as real behaviours.}
+\other{Not found in UNSW, ToN-IoT or BoT-IoT.}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{C6. DoS SlowHTTPTest is mislabelled: its flows are refused FTP connections}
+\addcontentsline{toc}{subsubsection}{C6. DoS SlowHTTPTest is mislabelled: its flows are refused FTP connections}
+\meta{5.4 behaviour + profile}{105,550 flows (+ 60 port-21 flows labelled SSH-Bruteforce)}
+
+SlowHTTPTest is an HTTP attack: it keeps web connections open with very slow requests. But \textbf{every} one of its flows goes to port 21 (FTP), sends 1 packet with SYN (client flags 2) and receives a reset (server flags 20). There is no HTTP traffic at all.
+
+The flows are identical to those of FTP-BruteForce, which was captured from the same attacker. A model would learn a wrong picture of a DoS attack.
+
+\example
+\begin{center}\fit{\begin{tabular}{llllllll}
+\toprule
+\textbf{Row} & \textbf{PROTOCOL} & \texttt{L4\_DST\_PORT} & \texttt{IN\_PKTS} & \texttt{OUT\_PKTS} & \texttt{CLIENT\_TCP\_FLAGS} & \texttt{SERVER\_TCP\_FLAGS} & \textbf{Attack} \\
+\midrule
+4143941 & 6 & 21 & 1 & 1 & 2 & 20 & DoS\_attacks-SlowHTTPTest \\
+396828 & 6 & 21 & 1 & 1 & 2 & 20 & FTP-BruteForce \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Remove these flows.}
+\why{It removes or keeps rows of this dataset only, and has to happen before the table of different behaviours is built (section 6); otherwise wrong rows would be counted as real behaviours.}
+\other{Not found in the other datasets; ToN-IoT has a similar case (T5).}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{C7. Attack labels on normal traffic}
+\addcontentsline{toc}{subsubsection}{C7. Attack labels on normal traffic}
+\meta{5.4 attack flows identical to Benign + same-machine check}{150,600 attack flows = 5.8\% of CIC-2018's attacks (Infiltration 75\%, XSS 91\%, SQL injection 78\%, web brute force 41\%)}
+
+These attack flows are identical in behaviour to Benign flows of the same network: in the first example a 1-packet DNS lookup is labelled Benign in one row and Infiltration in the other.
+
+\textbf{The strongest evidence is the same machine.} For 55\% of the removed Infiltration flows, the same victim computer sent the identical flow labelled Benign at another time; for 45\% even on a day without any infiltration attack, and for 32\% on the same day. The second table follows computer 172.31.69.12: its DNS lookup to 172.31.0.2 (the DNS server AWS gives every machine in the network) is Benign on every capture day, and becomes "Infiltration" only on 28 February and 1 March, the two infiltration days.
+
+So the label followed the attack's time window, not the traffic: CIC-2018 labelled everything an infected machine did during the attack, including its normal background traffic. The flows that are kept look different (third table): fewer DNS lookups, more packets, and ports used to move between Windows computers (SMB 445, RPC 135).
+
+NetFlow has no packet content, so a few removed flows (e.g. a DNS lookup made by the malware) could have been a tiny real part of the attack; they are identical to normal flows, so no model could separate them anyway.
+
+\example
+\begin{center}\fit{\begin{tabular}{lllllllllll}
+\toprule
+\textbf{Row} & \textbf{PROTOCOL} & \texttt{L4\_DST\_PORT} & \texttt{IN\_PKTS} & \texttt{IN\_BYTES} & \texttt{OUT\_PKTS} & \texttt{OUT\_BYTES} & \texttt{FLOW\_DURATION\_MILLISECONDS} & \texttt{CLIENT\_TCP\_FLAGS} & \texttt{SERVER\_TCP\_FLAGS} & \textbf{Attack} \\
+\midrule
+66 & 17 & 53 & 1 & 64 & 1 & 80 & 1 & 0 & 0 & Benign \\
+14116240 & 17 & 53 & 1 & 64 & 1 & 80 & 1 & 0 & 0 & Infilteration \\
+\bottomrule
+\end{tabular}}\end{center}
+\begin{center}\fit{\begin{tabular}{lll}
+\toprule
+\textbf{Day} & \textbf{Benign} & \textbf{Infiltration} \\
+\midrule
+2018-02-14 & 6 & 0 \\
+2018-02-15 & 2 & 0 \\
+2018-02-16 & 4 & 0 \\
+2018-02-20 & 6 & 0 \\
+2018-02-21 & 14 & 0 \\
+2018-02-22 & 4 & 0 \\
+2018-02-28 & 2 & 8 \\
+2018-03-01 & 2 & 8 \\
+2018-03-02 & 2 & 0 \\
+\bottomrule
+\end{tabular}}\end{center}
+\problembreak
+\begin{center}\fit{\begin{tabular}{lll}
+\toprule
+\textbf{} & \textbf{removed (identical to Benign)} & \textbf{kept} \\
+\midrule
+Infiltration flows & 140,826 & 47,326 \\
+to the DNS port 53 & 64\% & 29\% \\
+median packets in & 1 & 5 \\
+median bytes in & 65 & 462 \\
+\bottomrule
+\end{tabular}}\end{center}
+\begin{center}\fit{\begin{tabular}{llll}
+\toprule
+\textbf{Attack} & \textbf{flows} & \textbf{identical to Benign} & \textbf{left if removed} \\
+\midrule
+Infiltration & 188,152 & 140,826 & 47,326 \\
+DDoS LOIC-HTTP & 288,589 & 8,325 & 280,264 \\
+Web brute force & 1,618 & 668 & 950 \\
+XSS & 480 & 436 & 44 \\
+SQL injection & 440 & 344 & 96 \\
+DoS Hulk & 100,076 & 1 & 100,075 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Remove the attack flows whose behaviour also appears as Benign in CIC-2018 (relabelling them as Benign would also be defensible, but would invent labels; CIC-2018 already has 17.5 million Benign flows). C7 alone leaves XSS with 44 flows and SQL injection with 96; together with C5 (whose 880 conflicting rows are exactly these web attacks), \textbf{no XSS flow remains} and SQL injection keeps 53 different behaviours. CIC-2018 therefore contributes almost nothing to \emph{Web and injection}; ToN-IoT provides that family.}
+\why{It removes or keeps rows of this dataset only, and has to happen before the table of different behaviours is built (section 6); otherwise wrong rows would be counted as real behaviours.}
+\other{ToN-IoT and BoT-IoT have the same pattern but for a different reason, and keep their flows (T6, B7).}
+\end{problem}
+
+\needspace{20\baselineskip}\subsection{Decisions to keep it as it is}
+\begin{problem}
+\subsubsection*{C8. Very small classes}
+\addcontentsline{toc}{subsubsection}{C8. Very small classes}
+\meta{1.4 class distribution}{SQL injection 440, XSS 480, web brute force 1,618, DDoS LOIC-UDP 3,450}
+
+Four labels have too few flows to learn reliably at label level, and C7 makes the web attacks even smaller.
+
+\example
+\begin{center}\fit{\begin{tabular}{ll}
+\toprule
+\textbf{Attack} & \textbf{flows} \\
+\midrule
+SQL injection & 440 \\
+XSS & 480 \\
+Web brute force & 1,618 \\
+DDoS LOIC-UDP & 3,450 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Keep them all; report results also at family level.}
+\why{Rare labels are a property of this dataset.}
+\other{UNSW Worms (U5), ToN-IoT MITM / Ransomware (T8), BoT-IoT Theft (B4).}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{C9. Only 6 of the 9 attack families are present}
+\addcontentsline{toc}{subsubsection}{C9. Only 6 of the 9 attack families are present}
+\meta{1.3 family totals}{missing: Reconnaissance, Fuzzing, Interception, Data theft}
+
+CIC-2018 adds \emph{Credential attacks} and \emph{Web and injection}, which UNSW lacks, and is the only source of Bot and Infiltration.
+
+\example
+\begin{center}\fit{\begin{tabular}{ll}
+\toprule
+\textbf{Family} & \textbf{flows} \\
+\midrule
+Benign & 17,514,626 \\
+Denial of service & 1,627,316 \\
+Credential attacks & 576,812 \\
+Malware and botnets & 207,703 \\
+Exploitation and intrusion & 188,152 \\
+Web and injection & 920 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{No change; documented.}
+\why{It describes what this dataset can teach.}
+\other{See M12 for the family coverage of the merged data.}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{C10. FTP-BruteForce contains only refused connections}
+\addcontentsline{toc}{subsubsection}{C10. FTP-BruteForce contains only refused connections}
+\meta{5.4 FTP profile}{386,720 flows, 1 distinct behaviour}
+
+A brute-force attack should try many passwords on a login. Here every flow is the same single SYN packet to port 21 answered by a reset: the FTP server was closed, so no password was ever tried. After removing the duplicates (C4) 193,360 identical flows remain.
+
+\example
+\begin{center}\fit{\begin{tabular}{llllllll}
+\toprule
+\textbf{Row} & \texttt{L4\_DST\_PORT} & \texttt{IN\_PKTS} & \texttt{IN\_BYTES} & \texttt{OUT\_PKTS} & \texttt{CLIENT\_TCP\_FLAGS} & \texttt{SERVER\_TCP\_FLAGS} & \textbf{Attack} \\
+\midrule
+396828 & 21 & 1 & 60 & 1 & 2 & 20 & FTP-BruteForce \\
+396829 & 21 & 1 & 60 & 1 & 2 & 20 & FTP-BruteForce \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Keep them and document that they show failed connection attempts, not password guessing.}
+\why{It is still attack traffic (a scan of a closed port), but only one pattern.}
+\other{Not found in the other datasets.}
+\end{problem}
+
+\newpage
+\section{NF-ToN-IoT-v3 (27,520,260 flows) -- before the merge}
+\subsection{Decisions that change the data}
+\begin{problem}
+\subsubsection*{T1. Inconsistent label spelling}
+\addcontentsline{toc}{subsubsection}{T1. Inconsistent label spelling}
+\meta{1.1 label spellings}{10 labels}
+
+Eight labels are written in lower case (\texttt{ddos}, \texttt{xss}, \texttt{password}, ...) while \texttt{Benign} and \texttt{Backdoor} are capitalised. In the merged data \texttt{dos} (ToN-IoT) and \texttt{DoS} (UNSW, BoT-IoT) would be two different classes. The taxonomy lookup ignores case, so every label maps.
+
+\example
+\begin{center}\fit{\begin{tabular}{llll}
+\toprule
+\textbf{raw label} & \textbf{clean label} & \textbf{family} & \textbf{flows} \\
+\midrule
+Benign & Benign & Benign & 16,792,214 \\
+ddos & DDoS & Denial of service & 4,141,256 \\
+xss & XSS & Web and injection & 2,834,435 \\
+password & Password & Credential attacks & 1,594,777 \\
+scanning & Scanning & Reconnaissance & 1,358,977 \\
+injection & Injection & Web and injection & 381,777 \\
+dos & DoS & Denial of service & 203,456 \\
+Backdoor & Backdoor & Malware and botnets & 203,384 \\
+mitm & MITM & Interception and spoofing & 6,013 \\
+ransomware & Ransomware & Malware and botnets & 3,971 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Map every label to its clean name and family with \texttt{map\_\allowbreak{}labels} before the merge; the raw \texttt{Attack} column is not edited.}
+\why{The four files can only be stacked once every label has one clean name and one family; the spelling of a label is a property of this dataset.}
+\other{CIC-2018 has the same kind of problem (C1).}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{T2. Class imbalance and very large attack classes}
+\addcontentsline{toc}{subsubsection}{T2. Class imbalance and very large attack classes}
+\meta{1.4 class distribution}{Benign 61.0\%; DDoS 4,141,256; XSS 2,834,435}
+
+ToN-IoT is the largest file (27.5 million flows). Benign dominates, but several attack labels have millions of flows, while MITM has 6,013 and Ransomware 3,971.
+
+ToN-IoT's attacks are very varied: after T5, keeping each different behaviour once still leaves 3,355,000 attack rows, next to 2,282,642 Benign rows.
+
+\example
+\begin{center}\fit{\begin{tabular}{lll}
+\toprule
+\textbf{Attack} & \textbf{flows} & \textbf{different behaviours kept} \\
+\midrule
+Benign & 16,792,214 & 2,282,642 \\
+DDoS & 4,141,256 & 451,474 \\
+XSS & 2,834,435 & 1,497,451 \\
+Password & 1,594,777 & 697,124 \\
+Scanning & 1,358,977 & 225,074 \\
+Injection & 381,777 & 333,652 \\
+DoS & 203,456 & 121,803 \\
+Backdoor & 203,384 & 20,641 \\
+MITM & 6,013 & 4,951 \\
+Ransomware & 3,971 & 2,830 \\
+total & 27,520,260 & 5,637,642 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Delete nothing by hand. Inside the dataset, exact repeats of a behaviour are collapsed into one row with a \texttt{count} column, so every different behaviour is kept (section 6). Training balances classes and networks with weights; models are judged with macro-F1, per-class recall and a realistic 95\% / 5\% test set, not accuracy.}
+\why{The table of different behaviours (one row each, with its repeat count) is built inside each dataset, after its own removals and before the four files are stacked (section 6).}
+\other{UNSW (U1), CIC-2018 (C2); inverted in BoT-IoT (B1).}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{T3. Three columns have a different type than in UNSW and BoT-IoT}
+\addcontentsline{toc}{subsubsection}{T3. Three columns have a different type than in UNSW and BoT-IoT}
+\meta{0.4 column comparison + 3.3 formula}{\texttt{L7\_\allowbreak{}PROTO}, \texttt{SRC\_\allowbreak{}TO\_\allowbreak{}DST\_\allowbreak{}SECOND\_\allowbreak{}BYTES}, \texttt{DST\_\allowbreak{}TO\_\allowbreak{}SRC\_\allowbreak{}SECOND\_\allowbreak{}BYTES}}
+
+As in CIC-2018, these columns are integers here and decimals in UNSW and BoT-IoT. \texttt{L7\_\allowbreak{}PROTO} never has a sub-code.
+
+\texttt{SRC\_\allowbreak{}TO\_\allowbreak{}DST\_\allowbreak{}SECOND\_\allowbreak{}BYTES} is reproduced by floor(\textbf{OUT}\_BYTES $\div$ duration in ms) for 74.6\% of the flows: the same swapped direction and wrong unit; 72\% of its values are 0.
+
+\example
+\begin{center}\fit{\begin{tabular}{lllllll}
+\toprule
+\textbf{Row} & \texttt{L7\_PROTO} & \texttt{IN\_BYTES} & \texttt{OUT\_BYTES} & \texttt{FLOW\_DURATION\_MILLISECONDS} & \texttt{SRC\_TO\_DST\_SECOND\_BYTES} & \textbf{floor(OUT\_BYTES $\div$ duration)} \\
+\midrule
+1546 & 4 & 866 & 1,658 & 56 & 29 & 29 \\
+1572 & 4 & 866 & 1,658 & 65 & 25 & 25 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Same as CIC-2018 C3: drop the two \texttt{...\_\allowbreak{}SECOND\_\allowbreak{}BYTES} columns and write \texttt{L7\_\allowbreak{}PROTO} as \texttt{L7\_\allowbreak{}MAIN} + \texttt{L7\_\allowbreak{}SUB = 0}.}
+\why{A merged column must have one type and one meaning. The fix needs this dataset's own values, so it is done before the files are stacked.}
+\other{CIC-2018 (C3); UNSW and BoT-IoT have the decimal version (U2, U3, B2, B3).}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{T4. Exact duplicate rows, some repeated hundreds of times}
+\addcontentsline{toc}{subsubsection}{T4. Exact duplicate rows, some repeated hundreds of times}
+\meta{5.1 exact duplicates}{1,816,137 rows (6.60\%)}
+
+Rows identical in all 55 columns. Most are Benign: one flow appears \textbf{437 times} (the example shows three of its copies, same millisecond, same ports). Every Backdoor flow appears exactly twice (101,692 copies), and 745 MITM flows are repeated.
+
+Repeated rows give one flow hundreds of times the weight of the others and leak between training and test sets.
+
+\example
+\begin{center}\fit{\begin{tabular}{lllllll}
+\toprule
+\textbf{Row} & \texttt{FLOW\_START\_MILLISECONDS} & \texttt{IPV4\_SRC\_ADDR} & \texttt{L4\_SRC\_PORT} & \texttt{IPV4\_DST\_ADDR} & \texttt{L4\_DST\_PORT} & \textbf{Attack} \\
+\midrule
+25886380 & 1556542513555 & 192.168.1.1 & 53 & 192.168.1.169 & 52970 & Benign \\
+25886381 & 1556542513555 & 192.168.1.1 & 53 & 192.168.1.169 & 52970 & Benign \\
+25886382 & 1556542513555 & 192.168.1.1 & 53 & 192.168.1.169 & 52970 & Benign \\
+\bottomrule
+\end{tabular}}\end{center}
+\begin{center}\fit{\begin{tabular}{ll}
+\toprule
+\textbf{Attack} & \textbf{duplicate rows} \\
+\midrule
+Benign & 1,713,700 \\
+Backdoor & 101,692 \\
+MITM & 745 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Remove them, keeping the first copy (shared \texttt{clean()} rule).}
+\why{It removes or keeps rows of this dataset only, and has to happen before the table of different behaviours is built (section 6); otherwise wrong rows would be counted as real behaviours.}
+\other{UNSW (14,815), CIC-2018 (628,474); none in BoT-IoT.}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{T5. Web attacks labelled on DNS traffic}
+\addcontentsline{toc}{subsubsection}{T5. Web attacks labelled on DNS traffic}
+\meta{5.4 label profile (main destination ports) + protocol check}{1,261,353 flows (XSS 1,244,884 = 44\% of XSS, Injection 16,469)}
+
+XSS and injection are web attacks: the malicious script or command travels inside an HTTP request to a web server, and HTTP runs over \textbf{TCP} on port 80/443. Yet 44\% of the XSS flows go to port 53, the DNS port.
+
+The protocol check settles it (second table). The XSS flows to web ports look like a web attack: TCP, several packets, about 1.8 KB. The XSS flows to port 53 are \textbf{UDP}, recognised by nDPI as \textbf{DNS}, one packet of about 68 bytes, the same shape as Benign DNS lookups. A web attack cannot be carried by a single UDP DNS query.
+
+(The number 53 can of course appear \emph{inside} an XSS payload, e.g. \texttt{alert(53)}, but NetFlow never sees the payload: here 53 is the destination port of the connection.) As in CIC-2018 (C7), the attacker machine's own background DNS lookups were labelled with the attack. A model would learn "DNS query = XSS".
+
+\example
+\begin{center}\fit{\begin{tabular}{llllllllllll}
+\toprule
+\textbf{Row} & \textbf{PROTOCOL} & \texttt{L4\_DST\_PORT} & \texttt{IN\_PKTS} & \texttt{IN\_BYTES} & \texttt{OUT\_PKTS} & \texttt{OUT\_BYTES} & \texttt{FLOW\_DURATION\_MILLISECONDS} & \texttt{CLIENT\_TCP\_FLAGS} & \texttt{SERVER\_TCP\_FLAGS} & \textbf{Attack} & \texttt{L7\_PROTO} \\
+\midrule
+21963056 & 17 & 53 & 1 & 65 & 1 & 65 & 5 & 0 & 0 & xss & 5 \\
+21963057 & 17 & 53 & 1 & 65 & 1 & 81 & 3 & 0 & 0 & xss & 5 \\
+2048192 & 17 & 53 & 1 & 65 & 1 & 1,196 & 12 & 0 & 0 & Benign & 5 \\
+\bottomrule
+\end{tabular}}\end{center}
+\begin{center}\fit{\begin{tabular}{lllllll}
+\toprule
+\textbf{} & \textbf{flows} & \textbf{TCP \%} & \textbf{UDP \%} & \textbf{recognised as DNS (L7 5) \%} & \textbf{median packets in} & \textbf{median bytes in} \\
+\midrule
+XSS to web ports 80/443 & 1,589,533 & 100 & 0 & 0 & 6 & 1,772 \\
+XSS to port 53 & 1,244,884 & 0 & 100 & 100 & 1 & 65 \\
+Injection to port 53 & 16,469 & 0 & 100 & 100 & 1 & 65 \\
+Benign to port 53 & 913,131 & 0.7 & 99.3 & 100 & 1 & 71 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Remove the XSS and injection flows to port 53. Relabelling them as Benign would invent a label; ToN-IoT already has 16.8 million Benign flows, many of them DNS. XSS keeps 1,589,551 flows and injection 365,308, both far above what is needed.}
+\why{It removes or keeps rows of this dataset only, and has to happen before the table of different behaviours is built (section 6); otherwise wrong rows would be counted as real behaviours.}
+\other{Same cause as CIC-2018 C6/C7. DoS and DDoS flows to port 53 are kept: a DNS flood is a real DoS attack. Not found in Cyrine Chabbar's independent ToN-IoT check (her check did not profile ports per label).}
+\end{problem}
+
+\needspace{20\baselineskip}\subsection{Decisions to keep it as it is}
+\begin{problem}
+\subsubsection*{T6. Many attack flows look exactly like Benign flows}
+\addcontentsline{toc}{subsubsection}{T6. Many attack flows look exactly like Benign flows}
+\meta{5.4 attack flows identical to Benign}{6.1 million attack flows; Scanning 94.3\%, DDoS 76.3\%}
+
+Most ToN-IoT flows are tiny: the median flow has 1 packet in each direction. A port scan sends one SYN and gets no answer; a normal client that reaches a closed port does exactly the same. In the example, the same 1-packet, 44-byte SYN to port 443 is Benign in one row and Scanning in the other.
+
+Here the label is not wrong, the flow is simply too short to show the difference: a scan is visible as \textbf{many} such flows, not in one of them. Applying the CIC-2018 rule (C7) would delete 94\% of Scanning and 76\% of DDoS.
+
+\example
+\begin{center}\fit{\begin{tabular}{lllllllllll}
+\toprule
+\textbf{Row} & \textbf{PROTOCOL} & \texttt{L4\_DST\_PORT} & \texttt{IN\_PKTS} & \texttt{IN\_BYTES} & \texttt{OUT\_PKTS} & \texttt{OUT\_BYTES} & \texttt{FLOW\_DURATION\_MILLISECONDS} & \texttt{CLIENT\_TCP\_FLAGS} & \texttt{SERVER\_TCP\_FLAGS} & \textbf{Attack} \\
+\midrule
+275601 & 6 & 443 & 1 & 44 & 0 & 0 & 1 & 2 & 0 & Benign \\
+2316 & 6 & 443 & 1 & 44 & 0 & 0 & 1 & 2 & 0 & scanning \\
+\bottomrule
+\end{tabular}}\end{center}
+\begin{center}\fit{\begin{tabular}{llll}
+\toprule
+\textbf{Attack} & \textbf{flows} & \textbf{identical to Benign} & \textbf{\%} \\
+\midrule
+Scanning & 1,358,977 & 1,281,266 & 94.3 \\
+DDoS & 4,141,256 & 3,160,296 & 76.3 \\
+XSS & 2,834,435 & 1,046,970 & 36.9 \\
+Password & 1,594,777 & 531,206 & 33.3 \\
+DoS & 203,456 & 67,354 & 33.1 \\
+Ransomware & 3,971 & 355 & 8.9 \\
+MITM & 6,013 & 508 & 8.4 \\
+Injection & 381,777 & 28,752 & 7.5 \\
+Backdoor & 203,384 & 2,530 & 1.2 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Keep them; \textbf{do not} apply the CIC-2018 rule here. Document it as the limit of single-flow features; results on these classes are reported with this caveat.}
+\why{The decision depends on why the conflict exists in this dataset (wrong label in CIC-2018, too-short flow here).}
+\other{CIC-2018 removes them because the labels are wrong (C7); BoT-IoT keeps them for the same reason as here (B7). Cyrine Chabbar's independent ToN-IoT check reached the same decision with the same counts ("removal is not justified by behavioural overlap alone").}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{T7. Same behaviour, different attack label}
+\addcontentsline{toc}{subsubsection}{T7. Same behaviour, different attack label}
+\meta{5.4 behaviour duplicates}{e.g. 1,671,924 DDoS and 695 Injection flows share one behaviour}
+
+A 2-packet, 112-byte connection to port 443 answered by one packet is labelled DDoS, Injection or XSS depending on the row. Each attack opens connections like this; the difference lies in the payload, which NetFlow does not record.
+
+\example
+\begin{center}\fit{\begin{tabular}{lllllllllll}
+\toprule
+\textbf{Row} & \textbf{PROTOCOL} & \texttt{L4\_DST\_PORT} & \texttt{IN\_PKTS} & \texttt{IN\_BYTES} & \texttt{OUT\_PKTS} & \texttt{OUT\_BYTES} & \texttt{FLOW\_DURATION\_MILLISECONDS} & \texttt{CLIENT\_TCP\_FLAGS} & \texttt{SERVER\_TCP\_FLAGS} & \textbf{Attack} \\
+\midrule
+10764488 & 6 & 443 & 2 & 112 & 1 & 60 & 1 & 18 & 18 & ddos \\
+10425763 & 6 & 443 & 2 & 112 & 1 & 60 & 1 & 18 & 18 & injection \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Keep them; report label-level and family-level results separately.}
+\why{The conflict is between labels of this dataset only.}
+\other{UNSW (U8), BoT-IoT DoS vs DDoS (B6).}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{T8. Rare classes}
+\addcontentsline{toc}{subsubsection}{T8. Rare classes}
+\meta{1.4 class distribution}{MITM 6,013, Ransomware 3,971}
+
+ToN-IoT is the only source of MITM and Ransomware, and both are small.
+
+\example
+\begin{center}\fit{\begin{tabular}{ll}
+\toprule
+\textbf{Attack} & \textbf{flows} \\
+\midrule
+MITM & 6,013 \\
+Ransomware & 3,971 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Keep every flow; report at family level too.}
+\why{Rare labels are a property of this dataset.}
+\other{UNSW Worms (U5), CIC-2018 web attacks (C8), BoT-IoT Theft (B4).}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{T9. Only 6 of the 9 attack families are present}
+\addcontentsline{toc}{subsubsection}{T9. Only 6 of the 9 attack families are present}
+\meta{1.3 family totals}{missing: Exploitation, Fuzzing, Data theft}
+
+ToN-IoT is the widest IoT source: it is the only one with \emph{Interception and spoofing} (MITM), and the largest source of \emph{Web and injection} and \emph{Credential attacks}.
+
+\example
+\begin{center}\fit{\begin{tabular}{ll}
+\toprule
+\textbf{Family} & \textbf{flows} \\
+\midrule
+Benign & 16,792,214 \\
+Denial of service & 4,344,712 \\
+Web and injection & 3,216,212 \\
+Credential attacks & 1,594,777 \\
+Reconnaissance & 1,358,977 \\
+Malware and botnets & 207,355 \\
+Interception and spoofing & 6,013 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{No change; documented.}
+\why{It describes what this dataset can teach.}
+\other{See M12.}
+\end{problem}
+
+\newpage
+\section{NF-BoT-IoT-v3 (16,933,808 flows) -- before the merge}
+\subsection{Decisions that change the data}
+\begin{problem}
+\subsubsection*{B1. Inverted imbalance: almost no Benign traffic}
+\addcontentsline{toc}{subsubsection}{B1. Inverted imbalance: almost no Benign traffic}
+\meta{1.4 class distribution}{Benign 51,989 flows (0.3\%)}
+
+BoT-IoT is 99.7\% attacks: two flood labels alone have 15 million flows. Here Benign is the rare class, and its flows are unusual (65\% have a zero duration, see B2).
+
+The floods are extremely repetitive: the 16.9 million attack flows contain only 1,541,364 different behaviours (91\% are repeats), so keeping each behaviour once loses no attack pattern. Benign keeps 21,951 rows.
+
+\example
+\begin{center}\fit{\begin{tabular}{lll}
+\toprule
+\textbf{Attack} & \textbf{flows} & \textbf{different behaviours kept} \\
+\midrule
+DoS & 8,034,190 & 354,734 \\
+DDoS & 7,150,882 & 287,453 \\
+Reconnaissance & 1,695,132 & 898,729 \\
+Benign & 51,989 & 21,951 \\
+Theft & 1,615 & 448 \\
+total & 16,933,808 & 1,563,315 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Delete nothing by hand. Inside the dataset, exact repeats of a behaviour are collapsed into one row with a \texttt{count} column, so every different behaviour is kept (section 6). Training balances classes and networks with weights; models are judged with macro-F1, per-class recall and a realistic 95\% / 5\% test set, not accuracy. Use BoT-IoT mainly as attack data and report Benign recall separately; do not use it to describe normal traffic.}
+\why{The table of different behaviours (one row each, with its repeat count) is built inside each dataset, after its own removals and before the four files are stacked (section 6).}
+\other{The opposite of UNSW (U1), CIC-2018 (C2) and ToN-IoT (T2).}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{B2. Missing and infinite values in the \texttt{...\_\allowbreak{}SECOND\_\allowbreak{}BYTES} columns}
+\addcontentsline{toc}{subsubsection}{B2. Missing and infinite values in the \texttt{...\_\allowbreak{}SECOND\_\allowbreak{}BYTES} columns}
+\meta{3.1--3.4 NaN / inf, cause and class}{387,350 NaN + 1,716,860 inf, all from 1,052,105 zero-duration flows}
+
+Exactly as in UNSW: a duration of 0 ms gives 0 $\div$ 0 = NaN or bytes $\div$ 0 = infinity. The formula check confirms the swap: \texttt{SRC\_\allowbreak{}TO\_\allowbreak{}DST\_\allowbreak{}SECOND\_\allowbreak{}BYTES} = OUT\_BYTES $\div$ duration for 100\% of the other flows.
+
+The missing values hit the small classes: 64.9\% of Benign and 70.3\% of Theft. Because \texttt{clean()} drops every row with a NaN, it would delete most of BoT-IoT's normal traffic.
+
+\example
+\begin{center}\fit{\begin{tabular}{lllllll}
+\toprule
+\textbf{Row} & \texttt{IN\_BYTES} & \texttt{OUT\_BYTES} & \texttt{FLOW\_DURATION\_MILLISECONDS} & \texttt{SRC\_TO\_DST\_SECOND\_BYTES} & \texttt{DST\_TO\_SRC\_SECOND\_BYTES} & \textbf{Attack} \\
+\midrule
+72 & 229 & 0 & 0 & NaN & inf & Benign \\
+2044 & 71 & 126 & 0 & inf & inf & Benign \\
+\bottomrule
+\end{tabular}}\end{center}
+\begin{center}\fit{\begin{tabular}{ll}
+\toprule
+\textbf{Attack} & \textbf{\% of the class with NaN or inf} \\
+\midrule
+Theft & 70.3 \\
+Benign & 64.9 \\
+Reconnaissance & 41.2 \\
+DoS & 2.8 \\
+DDoS & 1.3 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{\textbf{Drop both columns} before \texttt{clean()} runs, as in UNSW.}
+\why{\texttt{clean()} deletes every row that still has a NaN, and it runs on each dataset before the merge. The columns must therefore be dropped first, in this dataset. Otherwise 65\% of Benign and 70\% of Theft would disappear.}
+\other{UNSW (U2); CIC-2018 and ToN-IoT store them as integers (C3, T3). Cyrine Chabbar's BoT-IoT check found the same 387,350 missing cells and proposed to avoid blanket row deletion; the infinite values and the swapped formula complete the picture and lead to dropping the columns.}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{B3. \texttt{L7\_\allowbreak{}PROTO} stores two codes in one decimal number}
+\addcontentsline{toc}{subsubsection}{B3. \texttt{L7\_\allowbreak{}PROTO} stores two codes in one decimal number}
+\meta{2.4 \texttt{L7\_\allowbreak{}PROTO} decimals}{1,851 flows, 796 of them ambiguous (\texttt{7.5})}
+
+As in UNSW, \texttt{L7\_\allowbreak{}PROTO} is a float: \texttt{10.16} is NetBIOS carrying SMB, \texttt{5.239} is DNS carrying another protocol. \texttt{7.5} (796 flows) can be HTTP+DNS (5) or HTTP+RTSP (50), because the trailing zero was lost. The cleaning found one more problem: BoT-IoT writes every value as a decimal (\texttt{7.0} = HTTP, no sub-code), and 30 values carry floating-point noise from the export (\texttt{5.2120000000000015} is 5.212). nDPI codes have at most three digits, so a longer decimal part is rounded to three.
+
+\example
+\begin{center}\fit{\begin{tabular}{lllll}
+\toprule
+\textbf{Row} & \textbf{PROTOCOL} & \texttt{L4\_DST\_PORT} & \texttt{L7\_PROTO} & \textbf{Attack} \\
+\midrule
+68 & 17 & 53 & 5.239 & Benign \\
+72 & 17 & 138 & 10.16 & Benign \\
+2044 & 17 & 53 & 5.212 & Benign \\
+17819 & 6 & 443 & 91.239 & Benign \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Split into \texttt{L7\_\allowbreak{}MAIN} and \texttt{L7\_\allowbreak{}SUB}, as in UNSW; document the ambiguous \texttt{7.5}.}
+\why{A merged column must have one type and one meaning. The fix needs this dataset's own values, so it is done before the files are stacked.}
+\other{UNSW (U3).}
+\end{problem}
+
+\needspace{20\baselineskip}\subsection{Decisions to keep it as it is}
+\begin{problem}
+\subsubsection*{B4. Very rare class: Theft, and wrong official numbers}
+\addcontentsline{toc}{subsubsection}{B4. Very rare class: Theft, and wrong official numbers}
+\meta{0.1 row count + 1.4 class distribution}{Theft 1,615 flows (0.01\%)}
+
+Theft (data exfiltration, keylogging) is the only \emph{Data theft} label of the project, and it is tiny.
+
+The official dataset page gives 16,993,808 flows and 1,651 Theft flows; the file contains 16,933,808 and 1,615. The checksum of the file matches the official manifest, so the page has typos (two swapped digits).
+
+\example
+\begin{center}\fit{\begin{tabular}{lll}
+\toprule
+\textbf{Count} & \textbf{official page} & \textbf{file} \\
+\midrule
+all flows & 16,993,808 & 16,933,808 \\
+Theft & 1,651 & 1,615 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Keep every Theft flow; use the counts from the file and report the typo.}
+\why{It is a property of this dataset.}
+\other{UNSW Worms (U5), ToN-IoT MITM / Ransomware (T8).}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{B5. Only 3 of the 9 attack families are present}
+\addcontentsline{toc}{subsubsection}{B5. Only 3 of the 9 attack families are present}
+\meta{1.3 family totals}{Denial of service, Reconnaissance, Data theft}
+
+BoT-IoT is almost entirely floods (DoS and DDoS, 15.2 million flows) and scans. It is the only source of Data theft.
+
+\example
+\begin{center}\fit{\begin{tabular}{ll}
+\toprule
+\textbf{Family} & \textbf{flows} \\
+\midrule
+Denial of service & 15,185,072 \\
+Reconnaissance & 1,695,132 \\
+Benign & 51,989 \\
+Data theft & 1,615 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{No change; documented.}
+\why{It describes what this dataset can teach.}
+\other{See M12.}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{B6. DoS and DDoS flows are identical}
+\addcontentsline{toc}{subsubsection}{B6. DoS and DDoS flows are identical}
+\meta{5.4 behaviour duplicates}{272,961 rows in 251 groups}
+
+The same 1-packet, 140-byte SYN to port 80 appears 122,631 times as DoS and 86,005 times as DDoS. DoS and DDoS differ in the \textbf{number of attacking machines}, which a single flow cannot show.
+
+Both labels belong to the same family, \emph{Denial of service}.
+
+\example
+\begin{center}\fit{\begin{tabular}{lllllllllll}
+\toprule
+\textbf{Row} & \textbf{PROTOCOL} & \texttt{L4\_DST\_PORT} & \texttt{IN\_PKTS} & \texttt{IN\_BYTES} & \texttt{OUT\_PKTS} & \texttt{OUT\_BYTES} & \texttt{FLOW\_DURATION\_MILLISECONDS} & \texttt{CLIENT\_TCP\_FLAGS} & \texttt{SERVER\_TCP\_FLAGS} & \textbf{Attack} \\
+\midrule
+7438830 & 6 & 80 & 1 & 140 & 0 & 0 & 0 & 2 & 0 & DoS \\
+65018 & 6 & 80 & 1 & 140 & 0 & 0 & 0 & 2 & 0 & DDoS \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Keep them; at family level there is no conflict.}
+\why{The conflict is between labels of this dataset only.}
+\other{UNSW (U8), ToN-IoT (T7).}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{B7. Reconnaissance flows that look exactly like Benign flows}
+\addcontentsline{toc}{subsubsection}{B7. Reconnaissance flows that look exactly like Benign flows}
+\meta{5.4 attack flows identical to Benign}{378,185 Reconnaissance flows (22.3\%); 57.6\% of Benign is involved}
+
+Many scan probes are single packets answered by a reset, the same as a normal client reaching a closed port. In the example the same flow is Benign in one row and Reconnaissance in the other. As in ToN-IoT, the flow is too short to show the difference.
+
+\example
+\begin{center}\fit{\begin{tabular}{lllllllllll}
+\toprule
+\textbf{Row} & \textbf{PROTOCOL} & \texttt{L4\_DST\_PORT} & \texttt{IN\_PKTS} & \texttt{IN\_BYTES} & \texttt{OUT\_PKTS} & \texttt{OUT\_BYTES} & \texttt{FLOW\_DURATION\_MILLISECONDS} & \texttt{CLIENT\_TCP\_FLAGS} & \texttt{SERVER\_TCP\_FLAGS} & \textbf{Attack} \\
+\midrule
+15352069 & 6 & 1 & 1 & 40 & 1 & 40 & 0 & 0 & 20 & Benign \\
+15211062 & 6 & 1 & 1 & 40 & 1 & 40 & 0 & 0 & 20 & Reconnaissance \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Keep them; do not apply the CIC-2018 rule (same reasoning as ToN-IoT T6).}
+\why{The decision depends on why the conflict exists in this dataset.}
+\other{ToN-IoT (T6); CIC-2018 removes its own because the labels are wrong (C7).}
+\end{problem}
+
+\newpage
+\section{After the merge: problems solved on the merged table}
+Each problem shows its size in the four datasets. The order of the columns is always UNSW, CIC-2018, ToN-IoT, BoT-IoT. Examples are taken from a random sample of 60,000 flows per dataset (\texttt{random\_state=42}).
+
+\subsection{Decisions that change the data}
+\begin{problem}
+\subsubsection*{M1. Codes stored as numbers}
+\addcontentsline{toc}{subsubsection}{M1. Codes stored as numbers}
+\meta{2.3 code columns (all four notebooks)}{11 columns in every dataset}
+
+Ports, protocol numbers, TCP flags, ICMP and DNS types and FTP codes are identifiers stored as integers. Port 443 is not "more" than port 80, and an average protocol number has no meaning, but a model would treat them as quantities.
+
+\example
+\begin{center}\fit{\begin{tabular}{lllllll}
+\toprule
+\textbf{Row} & \textbf{dataset} & \texttt{L4\_DST\_PORT} & \textbf{PROTOCOL} & \texttt{CLIENT\_TCP\_FLAGS} & \texttt{DNS\_QUERY\_TYPE} & \textbf{Attack} \\
+\midrule
+1742981 & UNSW & 60365 & 6 & 27 & 0 & Benign \\
+19621116 & CIC-2018 & 46388 & 6 & 20 & 0 & Benign \\
+18432811 & ToN-IoT & 53556 & 6 & 24 & 0 & Benign \\
+2783670 & BoT-IoT & 80 & 6 & 2 & 0 & DDoS \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Mark them as categorical on the merged table. The encoding (e.g. port ranges 0--1023 / 1024--49151 / 49152--65535) is chosen in feature engineering.}
+\whyafter{The same rule, on the same columns, in every dataset: it is applied once, after the merge.}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{M2. Timestamps stored as integers, and they reveal the attack}
+\addcontentsline{toc}{subsubsection}{M2. Timestamps stored as integers, and they reveal the attack}
+\meta{2.2 + 7.3 time vs label}{2 columns in every dataset}
+
+The start and end times are milliseconds since 1970. In every dataset the attacks were run at planned times: each CIC-2018 attack on its own day, ToN-IoT XSS only on 27 April 2019, BoT-IoT 90\% of the flows on 4 June 2018. A model given the time would learn \emph{when} the attack happened.
+
+The four captures are also from different years (2015, 2018, 2018, 2019), so time alone would tell the dataset.
+
+\example
+\begin{center}\fit{\begin{tabular}{lll}
+\toprule
+\textbf{Dataset} & \textbf{capture period} & \textbf{hours with > 90\% attacks} \\
+\midrule
+UNSW & 22 Jan -- 18 Feb 2015 & -- \\
+CIC-2018 & 14 Feb -- 2 Mar 2018 & most attack days \\
+ToN-IoT & 23 -- 29 Apr 2019 & 14 of 108 \\
+BoT-IoT & 15 May -- 19 Jun 2018 & 18 of 31 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Convert to datetime on the merged table for the analysis (plots over time, a time-based split). \textbf{Never a model feature.}}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{M3. IP addresses reveal the label}
+\addcontentsline{toc}{subsubsection}{M3. IP addresses reveal the label}
+\meta{7.2 IP vs label}{2 columns in every dataset}
+
+In UNSW 4 machines send every attack; in CIC-2018 195 source IPs send only attacks. In ToN-IoT and BoT-IoT the attacker machines also send normal traffic, but 4 BoT-IoT machines still send 99.8\% of the attacks.
+
+An address says \textbf{who} sent a flow, not what the flow does, and on a new network (SQ3) the attackers have different addresses.
+
+\example
+\begin{center}\fit{\begin{tabular}{lll}
+\toprule
+\textbf{Dataset} & \textbf{source IPs} & \textbf{attack-only source IPs} \\
+\midrule
+UNSW & 40 & 4 \\
+CIC-2018 & 181,876 & 195 \\
+ToN-IoT & 15,270 & 2 \\
+BoT-IoT & 20 & 0 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Drop \texttt{IPV4\_\allowbreak{}SRC\_\allowbreak{}ADDR} and \texttt{IPV4\_\allowbreak{}DST\_\allowbreak{}ADDR} (the shared \texttt{clean()} already does it for each dataset; the merged table never contains them). No rows are removed.}
+\whyafter{The same rule for every dataset.}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{M4. TTL is a fingerprint of the machines, not of the attack}
+\addcontentsline{toc}{subsubsection}{M4. TTL is a fingerprint of the machines, not of the attack}
+\meta{7.5 TTL vs label + 3.6 TTL = 0}{\texttt{MIN\_\allowbreak{}TTL}, \texttt{MAX\_\allowbreak{}TTL} in every dataset}
+
+The TTL depends on the operating system of the sender and on the number of routers: Linux starts at 64, Windows at 128. In UNSW benign traffic has 31/32 and attacks 63/254/255; in BoT-IoT almost every attack has 64. TTL identifies the attacker's computer.
+
+The share of flows without a TTL (0 = not recorded) is also completely different per dataset, so TTL also reveals the dataset.
+
+\example
+\begin{center}\fit{\begin{tabular}{llll}
+\toprule
+\textbf{Dataset} & \textbf{\% of flows with TTL = 0} & \textbf{typical attack TTL} & \textbf{typical Benign TTL} \\
+\midrule
+UNSW & 1.15 & 63 / 254 / 255 & 31 / 32 \\
+CIC-2018 & 39.53 & 127 / 63 & 128 / 100--103 \\
+ToN-IoT & 67.26 & 64 & 0 / 64 / 128 \\
+BoT-IoT & 11.74 & 64 & 0 / 64 / 127 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Keep the columns for the analysis; \textbf{not model features}. No rows are removed.}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{M5. Random identifiers}
+\addcontentsline{toc}{subsubsection}{M5. Random identifiers}
+\meta{7.1 + 2.3}{\texttt{L4\_\allowbreak{}SRC\_\allowbreak{}PORT}, \texttt{DNS\_\allowbreak{}QUERY\_\allowbreak{}ID} in every dataset}
+
+The source port is a free number chosen by the client's operating system, and the DNS query ID is a random 16-bit number. Neither describes behaviour; a model could only learn the habits of one attack tool.
+
+\example
+\begin{center}\fit{\begin{tabular}{llllll}
+\toprule
+\textbf{Row} & \textbf{dataset} & \texttt{L4\_SRC\_PORT} & \texttt{L4\_DST\_PORT} & \texttt{DNS\_QUERY\_ID} & \textbf{Attack} \\
+\midrule
+409274 & UNSW & 55172 & 53 & 29217 & Benign \\
+2812862 & CIC-2018 & 53149 & 53 & 46326 & Benign \\
+14069944 & ToN-IoT & 54997 & 53 & 17482 & Benign \\
+16632929 & BoT-IoT & 47171 & 53 & 3937 & Benign \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Not model features. Also left out when two flows are compared for identical behaviour.}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{M6. ICMP fields filled for TCP flows}
+\addcontentsline{toc}{subsubsection}{M6. ICMP fields filled for TCP flows}
+\meta{3.6 disguised missing values}{1.75 M / 1.54 M / 429 k / 9.8 k flows}
+
+\texttt{ICMP\_\allowbreak{}TYPE} and \texttt{ICMP\_\allowbreak{}IPV4\_\allowbreak{}TYPE} only have a meaning for ICMP (protocol 1) and ICMPv6 (58), yet they hold values for many TCP flows. The values are leftovers of the exporter, not information about the flow.
+
+\example
+\begin{center}\fit{\begin{tabular}{lllll}
+\toprule
+\textbf{} & \textbf{UNSW} & \textbf{CIC-2018} & \textbf{ToN-IoT} & \textbf{BoT-IoT} \\
+\midrule
+TCP flows with an ICMP value & 1,754,341 & 1,538,930 & 429,291 & 9,776 \\
+\bottomrule
+\end{tabular}}\end{center}
+\begin{center}\fit{\begin{tabular}{lllllll}
+\toprule
+\textbf{Row} & \textbf{dataset} & \textbf{PROTOCOL} & \texttt{L4\_DST\_PORT} & \texttt{ICMP\_TYPE} & \texttt{ICMP\_IPV4\_TYPE} & \textbf{Attack} \\
+\midrule
+1742981 & UNSW & 6 & 60365 & 21248 & 83 & Benign \\
+10206399 & CIC-2018 & 6 & 80 & 41984 & 164 & Benign \\
+25260225 & ToN-IoT & 6 & 8080 & 12288 & 48 & Backdoor \\
+7405561 & BoT-IoT & 6 & 80 & 10240 & 40 & DoS \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Set both to 0 when \texttt{PROTOCOL} is neither 1 nor 58, on the merged table.}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{M7. \texttt{MIN\_\allowbreak{}IP\_\allowbreak{}PKT\_\allowbreak{}LEN} = 0, and both \texttt{IP\_\allowbreak{}PKT\_\allowbreak{}LEN} columns copy other columns}
+\addcontentsline{toc}{subsubsection}{M7. \texttt{MIN\_\allowbreak{}IP\_\allowbreak{}PKT\_\allowbreak{}LEN} = 0, and both \texttt{IP\_\allowbreak{}PKT\_\allowbreak{}LEN} columns copy other columns}
+\meta{4.2 + 4.3 rules}{66 k / 1.98 M / 11.8 M / 12.1 M flows}
+
+No IP packet can be 0 bytes long, yet \texttt{MIN\_\allowbreak{}IP\_\allowbreak{}PKT\_\allowbreak{}LEN} is 0 on one-way flows (\texttt{OUT\_\allowbreak{}PKTS} = 0); \texttt{SHORTEST\_\allowbreak{}FLOW\_\allowbreak{}PKT} gives the correct value. Otherwise the two columns are identical, and \texttt{MAX\_\allowbreak{}IP\_\allowbreak{}PKT\_\allowbreak{}LEN} equals \texttt{LONGEST\_\allowbreak{}FLOW\_\allowbreak{}PKT} on 100\% of the flows of all four datasets.
+
+A few one-way flows are exceptions with a non-zero \texttt{MIN\_\allowbreak{}IP\_\allowbreak{}PKT\_\allowbreak{}LEN} (12 in CIC-2018, 60 in ToN-IoT, none in UNSW and BoT-IoT; found in Cyrine Chabbar's ToN-IoT check). They do not change the decision.
+
+The wrong 0 is most common in floods and scans, so a model could learn the exporter's bug as a sign of attack.
+
+\example
+\begin{center}\fit{\begin{tabular}{lllll}
+\toprule
+\textbf{} & \textbf{UNSW} & \textbf{CIC-2018} & \textbf{ToN-IoT} & \textbf{BoT-IoT} \\
+\midrule
+flows with MIN\_IP\_PKT\_LEN = 0 & 66,121 & 1,975,355 & 11,838,122 & 12,102,947 \\
+\bottomrule
+\end{tabular}}\end{center}
+\begin{center}\fit{\begin{tabular}{lllllllll}
+\toprule
+\textbf{Row} & \textbf{dataset} & \texttt{IN\_PKTS} & \texttt{OUT\_PKTS} & \texttt{SHORTEST\_FLOW\_PKT} & \texttt{MIN\_IP\_PKT\_LEN} & \texttt{LONGEST\_FLOW\_PKT} & \texttt{MAX\_IP\_PKT\_LEN} & \textbf{Attack} \\
+\midrule
+679421 & UNSW & 2 & 0 & 57 & 0 & 57 & 57 & Generic \\
+19621116 & CIC-2018 & 1 & 0 & 40 & 0 & 40 & 40 & Benign \\
+18432811 & ToN-IoT & 1 & 0 & 329 & 0 & 329 & 329 & Benign \\
+13429529 & BoT-IoT & 9 & 0 & 28 & 0 & 28 & 28 & DoS \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Drop \texttt{MIN\_\allowbreak{}IP\_\allowbreak{}PKT\_\allowbreak{}LEN} and \texttt{MAX\_\allowbreak{}IP\_\allowbreak{}PKT\_\allowbreak{}LEN}; keep \texttt{SHORTEST\_\allowbreak{}FLOW\_\allowbreak{}PKT} and \texttt{LONGEST\_\allowbreak{}FLOW\_\allowbreak{}PKT}. Nothing is lost.}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{M8. Exact copies of other columns}
+\addcontentsline{toc}{subsubsection}{M8. Exact copies of other columns}
+\meta{7.4 redundancy}{2 columns in every dataset}
+
+\texttt{TCP\_\allowbreak{}FLAGS} = \texttt{CLIENT\_\allowbreak{}TCP\_\allowbreak{}FLAGS} OR \texttt{SERVER\_\allowbreak{}TCP\_\allowbreak{}FLAGS} and \texttt{ICMP\_\allowbreak{}IPV4\_\allowbreak{}TYPE} = \texttt{ICMP\_\allowbreak{}TYPE} $\div$ 256 on 100\% of the flows of all four datasets.
+
+\example
+\begin{center}\fit{\begin{tabular}{llllll}
+\toprule
+\textbf{Row} & \textbf{dataset} & \texttt{CLIENT\_TCP\_FLAGS} & \texttt{SERVER\_TCP\_FLAGS} & \texttt{TCP\_FLAGS} & \textbf{Attack} \\
+\midrule
+1742981 & UNSW & 27 & 27 & 27 & Benign \\
+19621116 & CIC-2018 & 20 & 0 & 20 & Benign \\
+18432811 & ToN-IoT & 24 & 0 & 24 & Benign \\
+2783670 & BoT-IoT & 2 & 20 & 22 & DDoS \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Drop \texttt{TCP\_\allowbreak{}FLAGS} and \texttt{ICMP\_\allowbreak{}IPV4\_\allowbreak{}TYPE}; they can be recomputed at any time.}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{M9. Invalid DNS TTL values}
+\addcontentsline{toc}{subsubsection}{M9. Invalid DNS TTL values}
+\meta{4.2 rules + 6.3 limits}{UNSW 12, BoT-IoT 320 flows}
+
+RFC 2181 limits a DNS TTL to $2^{31}$-1 seconds (68 years) and says larger values must be read as 0. Some values are close to $2^{32}$ (136 years): a negative number written as unsigned.
+
+\example
+\begin{center}\fit{\begin{tabular}{lllll}
+\toprule
+\textbf{} & \textbf{UNSW} & \textbf{CIC-2018} & \textbf{ToN-IoT} & \textbf{BoT-IoT} \\
+\midrule
+flows above 2,147,483,647 & 12 & 0 & 0 & 320 \\
+\bottomrule
+\end{tabular}}\end{center}
+\begin{center}\fit{\begin{tabular}{llllll}
+\toprule
+\textbf{Row} & \textbf{dataset} & \texttt{L4\_DST\_PORT} & \texttt{DNS\_QUERY\_TYPE} & \texttt{DNS\_TTL\_ANSWER} & \textbf{Attack} \\
+\midrule
+316940 & UNSW & 53 & 12 & 3,400,622,437 & Exploits \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Set values above $2^{31}$-1 to 0 on the merged table, as the standard prescribes. Applied in the merge: 14 rows changed (UNSW 12; BoT-IoT 2, because its 320 flows had already been collapsed into 2 rows). One row then became identical to another row of the same dataset and label and was merged into it, its \texttt{count} added, so there is still one row per behaviour.}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{M10. Columns that reveal which dataset a flow comes from}
+\addcontentsline{toc}{subsubsection}{M10. Columns that reveal which dataset a flow comes from}
+\meta{cross-dataset check (60,000-flow sample per dataset)}{best single column: MIN\_TTL (78\% correct, chance 25\%)}
+
+After the merge a model could learn "this looks like ToN-IoT" instead of "this is an attack": the datasets have very different attack shares, so knowing the dataset already helps. We trained a tiny decision tree on \textbf{one column at a time} to predict the dataset. A column that does this well is a dataset fingerprint.
+
+Some columns are fingerprints for a technical reason, not because of the traffic: the share of TTL = 0, of \texttt{FTP\_\allowbreak{}COMMAND\_\allowbreak{}RET\_\allowbreak{}CODE} filled, of congestion flags or of non-zero \texttt{IAT\_\allowbreak{}MIN} differs between the exporter set-ups.
+
+\example
+\begin{center}\fit{\begin{tabular}{ll}
+\toprule
+\textbf{Column} & \textbf{accuracy predicting the dataset} \\
+\midrule
+MIN\_TTL & 78.5 \\
+MAX\_TTL & 78.5 \\
+LONGEST\_FLOW\_PKT & 74.1 \\
+TCP\_WIN\_MAX\_IN & 68.3 \\
+DURATION\_IN & 66.1 \\
+IN\_BYTES & 65.9 \\
+FLOW\_DURATION\_MILLISECONDS & 65.7 \\
+SRC\_TO\_DST\_IAT\_MAX & 64.7 \\
+\bottomrule
+\end{tabular}}\end{center}
+\begin{center}\fit{\begin{tabular}{llllllll}
+\toprule
+\textbf{Dataset} & \textbf{TTL = 0 \%} & \textbf{FTP code non-zero \%} & \textbf{flags > 31 \%} & \textbf{IAT\_MIN non-zero \%} & \textbf{L7\_PROTO decimal \%} & \texttt{MIN\_IP\_PKT\_LEN = 0 \%} & \textbf{duration 0 \%} \\
+\midrule
+UNSW & 1.15 & 18.58 & 0 & 0.08 & 1.01 & 2.81 & 5.26 \\
+CIC-2018 & 39.53 & 0 & 28.28 & 25.48 & 0 & 9.97 & 0 \\
+ToN-IoT & 67.26 & 0.34 & 0.02 & 9.21 & 0 & 43.09 & 0 \\
+BoT-IoT & 11.74 & 0 & 0 & 87.65 & 0.02 & 71.28 & 6.21 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Exclude the technical fingerprints from the model features (TTL, already excluded by M4; \texttt{FTP\_\allowbreak{}COMMAND\_\allowbreak{}RET\_\allowbreak{}CODE}). For the others, feature selection keeps a column only if it separates attacks \textbf{within} each dataset, not just the datasets. The model is always tested on a held-out dataset (SQ3).}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{M11. The same behaviour has a different family in another dataset}
+\addcontentsline{toc}{subsubsection}{M11. The same behaviour has a different family in another dataset}
+\meta{cross-dataset behaviour comparison + merge (step 6)}{17,587 behaviours; 38,453 rows of the merged table (none removed)}
+
+Each dataset alone is consistent for these behaviours, but the merged data is not: the same flow is, for example, Benign in one network and Reconnaissance in another. The largest group: about 14,200 behaviours that are Reconnaissance in BoT-IoT and Benign in ToN-IoT, two IoT testbeds where a short probe and a normal short connection look the same.
+
+In the merge, a behaviour is flagged when it appears in at least two datasets with at least two different families: 17,587 behaviours, 38,453 rows. The rows are few, but the ToN-IoT ones stand for 5.3 million flows (common short Benign connections). UNSW has none: its behaviours do not occur in the other networks (see K13).
+
+Removing them would delete whole groups of normal traffic from one dataset and attacks from another; keeping them unchanged teaches the model contradictions.
+
+\example
+\begin{center}\fit{\begin{tabular}{ll}
+\toprule
+\textbf{datasets : family (phase 2 check)} & \textbf{behaviours} \\
+\midrule
+BoT:Reconnaissance | ToN:Benign & 14,234 \\
+BoT:Reconnaissance | CIC18:Exploitation and intrusion | ToN:Benign & 258 \\
+CIC18:Benign | ToN:Web and injection & 160 \\
+CIC18:Benign | ToN:Denial of service & 72 \\
+CIC18:Exploitation and intrusion | ToN:Benign & 40 \\
+CIC18:Benign | ToN:Reconnaissance & 25 \\
+\bottomrule
+\end{tabular}}\end{center}
+\begin{center}\fit{\begin{tabular}{lll}
+\toprule
+\textbf{Dataset (merged table)} & \textbf{rows flagged} & \textbf{flows they stand for} \\
+\midrule
+UNSW & 0 & 0 \\
+CIC-2018 & 2,203 & 133,484 \\
+ToN-IoT & 20,554 & 5,346,962 \\
+BoT-IoT & 15,696 & 83,986 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Flag them with a column \texttt{ambiguous\_\allowbreak{}across\_\allowbreak{}sources} on the merged table (no row removed). Train with and without them and report both; the train/test split keeps each behaviour on one side only.}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{M12. One dataset dominates some families}
+\addcontentsline{toc}{subsubsection}{M12. One dataset dominates some families}
+\meta{family $\times$ dataset, different behaviours kept (section 6)}{e.g. Web and injection: ToN-IoT 1,831,103 vs CIC-2018 53}
+
+Even with every behaviour kept, a family can come almost entirely from one network. A model would then learn that family as it looks in that network, and the comparison between networks (SQ2) would rest on one dataset.
+
+\example
+\begin{center}\fit{\begin{tabular}{lllll}
+\toprule
+\textbf{Family} & \textbf{UNSW} & \textbf{CIC-2018} & \textbf{ToN-IoT} & \textbf{BoT-IoT} \\
+\midrule
+Benign & 1,307,351 & 8,178,232 & 2,282,642 & 21,951 \\
+Credential attacks & 0 & 94,890 & 697,124 & 0 \\
+Data theft & 0 & 0 & 0 & 448 \\
+Denial of service & 5,360 & 642,600 & 573,277 & 642,187 \\
+Exploitation and intrusion & 42,740 & 27,213 & 0 & 0 \\
+Fuzzing and crypto & 32,713 & 0 & 0 & 0 \\
+Interception and spoofing & 0 & 0 & 4,951 & 0 \\
+Malware and botnets & 3,802 & 2,804 & 23,471 & 0 \\
+Reconnaissance & 13,134 & 0 & 225,074 & 898,729 \\
+Web and injection & 0 & 53 & 1,831,103 & 0 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Split train/test stratified by \textbf{dataset and family}, give each network the same total weight in training (section 6), and report results per dataset as well as overall. A family with fewer than 1,000 different behaviours in a dataset is not used to compare networks.}
+\end{problem}
+
+\needspace{20\baselineskip}\subsection{Decisions to keep it as it is}
+\begin{problem}
+\subsubsection*{K1. TTL = 0 means "not recorded"}
+\addcontentsline{toc}{subsubsection}{K1. TTL = 0 means "not recorded"}
+\meta{3.6 disguised missing values}{1.1\% / 39.5\% / 67.2\% / 11.6\% of the flows}
+
+A packet with TTL 0 is thrown away by the network, so 0 means the exporter did not record it. It cannot be imputed: TTL depends on the sending machine.
+
+\example
+\begin{center}\fit{\begin{tabular}{lllll}
+\toprule
+\textbf{} & \textbf{UNSW} & \textbf{CIC-2018} & \textbf{ToN-IoT} & \textbf{BoT-IoT} \\
+\midrule
+flows with TTL = 0 & 27,147 & 7,938,061 & 18,492,406 & 1,965,382 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Keep 0 as the "unknown" marker. TTL is not a model feature anyway (M4).}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{K2. 0 means "does not apply" in protocol-specific fields}
+\addcontentsline{toc}{subsubsection}{K2. 0 means "does not apply" in protocol-specific fields}
+\meta{3.6 disguised missing values}{DNS and FTP fields}
+
+DNS fields are 0 outside DNS flows and FTP codes are 0 outside FTP. That is correct: there is nothing to record. Some DNS / FTP flows also have 0 because no answer came back.
+
+\example
+\begin{center}\fit{\begin{tabular}{lllllll}
+\toprule
+\textbf{Row} & \textbf{dataset} & \texttt{L4\_DST\_PORT} & \texttt{DNS\_QUERY\_TYPE} & \texttt{DNS\_TTL\_ANSWER} & \texttt{FTP\_COMMAND\_RET\_CODE} & \textbf{Attack} \\
+\midrule
+409274 & UNSW & 53 & 1 & 60 & 0 & Benign \\
+2812862 & CIC-2018 & 53 & 1 & 60 & 0 & Benign \\
+14069944 & ToN-IoT & 53 & 1 & 0 & 0 & Benign \\
+16632929 & BoT-IoT & 53 & 1 & 586 & 0 & Benign \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Keep 0 as "not applicable / no reply". No imputation.}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{K3. Byte counts too small for the number of packets}
+\addcontentsline{toc}{subsubsection}{K3. Byte counts too small for the number of packets}
+\meta{4.2 rules + 4.3}{45,540 / 0 / 53,198 / 80 flows}
+
+Every IP packet carries at least 20 bytes of header, so a 1-packet TCP flow cannot be 9 bytes. \texttt{SHORTEST\_\allowbreak{}FLOW\_\allowbreak{}PKT} contradicts \texttt{IN\_\allowbreak{}BYTES} on these rows. The true value cannot be recovered.
+
+\example
+\begin{center}\fit{\begin{tabular}{lllll}
+\toprule
+\textbf{} & \textbf{UNSW} & \textbf{CIC-2018} & \textbf{ToN-IoT} & \textbf{BoT-IoT} \\
+\midrule
+flows & 45,540 & 0 & 53,198 & 80 \\
+\bottomrule
+\end{tabular}}\end{center}
+\begin{center}\fit{\begin{tabular}{lllllll}
+\toprule
+\textbf{Row} & \textbf{dataset} & \textbf{PROTOCOL} & \texttt{IN\_PKTS} & \texttt{IN\_BYTES} & \texttt{SHORTEST\_FLOW\_PKT} & \textbf{Attack} \\
+\midrule
+981040 & UNSW & 6 & 1 & 9 & 52 & Benign \\
+20335181 & ToN-IoT & 6 & 1 & 4 & 52 & password \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Keep the rows; document as an exporter error; re-check in the EDA.}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{K4. Size bins do not add up to the packet count}
+\addcontentsline{toc}{subsubsection}{K4. Size bins do not add up to the packet count}
+\meta{4.2 rules + 4.3}{482,792 / 1,100,188 / 148,670 / 1,356 flows}
+
+The five \texttt{NUM\_\allowbreak{}PKTS\_\allowbreak{}*} columns should add up to \texttt{IN\_\allowbreak{}PKTS + OUT\_\allowbreak{}PKTS}. In UNSW they count exactly 11 or 9 packets too many, a systematic exporter bug; in the other datasets the difference varies. Flows with an oversized packet (K6) count fewer, because that packet fits in no bin.
+
+\example
+\begin{center}\fit{\begin{tabular}{lllll}
+\toprule
+\textbf{} & \textbf{UNSW} & \textbf{CIC-2018} & \textbf{ToN-IoT} & \textbf{BoT-IoT} \\
+\midrule
+flows & 482,792 & 1,100,188 & 148,670 & 1,356 \\
+\bottomrule
+\end{tabular}}\end{center}
+\begin{center}\fit{\begin{tabular}{lllllll}
+\toprule
+\textbf{Row} & \textbf{dataset} & \texttt{IN\_PKTS} & \texttt{OUT\_PKTS} & \texttt{NUM\_PKTS\_UP\_TO\_128\_BYTES} & \texttt{NUM\_PKTS\_128\_TO\_256\_BYTES} & \textbf{Attack} \\
+\midrule
+188742 & UNSW & 11 & 11 & 31 & 0 & Exploits \\
+10966355 & CIC-2018 & 1 & 1 & 2 & 2 & Benign \\
+20282847 & ToN-IoT & 3 & 3 & 11 & 0 & password \\
+15281736 & BoT-IoT & 6 & 6 & 9 & 1 & Reconnaissance \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Keep; document. In feature engineering, use the bins as shares of their own total.}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{K5. Largest gap between packets longer than the flow}
+\addcontentsline{toc}{subsubsection}{K5. Largest gap between packets longer than the flow}
+\meta{4.2 rules}{33,970 / 547,302 / 106,238 / 111 flows}
+
+\texttt{SRC\_\allowbreak{}TO\_\allowbreak{}DST\_\allowbreak{}IAT\_\allowbreak{}MAX} (the longest pause between two packets) can never be longer than the whole flow. On these flows it is, sometimes by seconds (a 1-ms flow with a 3,333-ms gap): the exporter measures the two values with different clocks or cuts the flow differently. The true values cannot be recovered.
+
+\example
+\begin{center}\fit{\begin{tabular}{lllll}
+\toprule
+\textbf{} & \textbf{UNSW} & \textbf{CIC-2018} & \textbf{ToN-IoT} & \textbf{BoT-IoT} \\
+\midrule
+flows & 33,970 & 547,302 & 106,238 & 111 \\
+\bottomrule
+\end{tabular}}\end{center}
+\begin{center}\fit{\begin{tabular}{llllll}
+\toprule
+\textbf{Row} & \textbf{dataset} & \texttt{IN\_PKTS} & \texttt{FLOW\_DURATION\_MILLISECONDS} & \texttt{SRC\_TO\_DST\_IAT\_MAX} & \textbf{Attack} \\
+\midrule
+2339928 & UNSW & 9 & 1,210 & 1,652 & Benign \\
+10966355 & CIC-2018 & 1 & 1 & 147 & Benign \\
+20335181 & ToN-IoT & 1 & 1 & 3,333 & password \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Keep; document.}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{K6. Packets above the Ethernet limit of 1514 bytes}
+\addcontentsline{toc}{subsubsection}{K6. Packets above the Ethernet limit of 1514 bytes}
+\meta{4.2 rules + 4.3}{0 / 1,002 / 554 / 1,075 flows}
+
+A normal Ethernet frame carries at most 1514 bytes. Larger "packets" (up to 65,212 bytes) appear when the network card merges segments before the capture tool sees them. A capture artefact, not attack behaviour.
+
+\example
+\begin{center}\fit{\begin{tabular}{lllll}
+\toprule
+\textbf{} & \textbf{UNSW} & \textbf{CIC-2018} & \textbf{ToN-IoT} & \textbf{BoT-IoT} \\
+\midrule
+flows & 0 & 1,002 & 554 & 1,075 \\
+\bottomrule
+\end{tabular}}\end{center}
+\begin{center}\fit{\begin{tabular}{llllll}
+\toprule
+\textbf{Row} & \textbf{dataset} & \textbf{PROTOCOL} & \texttt{IN\_PKTS} & \texttt{LONGEST\_FLOW\_PKT} & \textbf{Attack} \\
+\midrule
+15009988 & CIC-2018 & 6 & 5 & 1,913 & Infilteration \\
+15281736 & BoT-IoT & 6 & 6 & 2,948 & Reconnaissance \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Keep; document.}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{K7. Small rule violations}
+\addcontentsline{toc}{subsubsection}{K7. Small rule violations}
+\meta{2.5 + 4.2}{a few flows each}
+
+Rare cases that are allowed by the protocols or too few to matter: TCP flows without any flag (a NULL scan sends exactly this), port 0, a few invalid DNS / ICMP type values in Benign traffic, \texttt{DURATION\_\allowbreak{}IN}/\texttt{DURATION\_\allowbreak{}OUT} 1 ms longer than the flow (rounding), and one-way single-packet flows whose packet is longer than \texttt{IN\_\allowbreak{}BYTES} (found in Cyrine Chabbar's ToN-IoT check).
+
+\example
+\begin{center}\fit{\begin{tabular}{lllll}
+\toprule
+\textbf{Rule} & \textbf{UNSW} & \textbf{CIC-2018} & \textbf{ToN-IoT} & \textbf{BoT-IoT} \\
+\midrule
+TCP flow without flags & 7 & 231 & 1 & 5,061 \\
+TCP/UDP port 0 & 6 & 18 & 4,782 & 1,171 \\
+invalid DNS / ICMP type & 12 & 0 & 18 & 0 \\
+duration 1 ms too long & 0 & 4,106 & 17 & 7,154 \\
+1-packet flow longer than IN\_BYTES & 0 & 11 & 17 & 0 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Keep. BoT-IoT's 3,872 Benign TCP flows without flags (7.4\% of its Benign) are re-checked in the EDA.}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{K8. Unusual but legitimate protocol values}
+\addcontentsline{toc}{subsubsection}{K8. Unusual but legitimate protocol values}
+\meta{2.3 + 3.6}{ICMPv6, LLMNR, congestion flags}
+
+\textbf{ICMPv6} (protocol 58): normal IPv6 neighbour discovery, so ICMP fields are valid there. \textbf{LLMNR} (port 5355): Windows name lookups in the DNS format, so a DNS query type is valid there. \textbf{ECE/CWR} flags (TCP flags above 31): valid congestion flags.
+
+They are distributed very unevenly between datasets (28\% of CIC-2018 flows have ECE/CWR, almost none elsewhere), which is why they are also checked in M10.
+
+\example
+\begin{center}\fit{\begin{tabular}{lllll}
+\toprule
+\textbf{Value} & \textbf{UNSW} & \textbf{CIC-2018} & \textbf{ToN-IoT} & \textbf{BoT-IoT} \\
+\midrule
+ICMPv6 flows & 0 & 18,745 & 1,255 & 94 \\
+LLMNR flows & 0 & 102,553 & 13,055 & 26 \\
+flows with ECE/CWR & 0 & 28\% & 7,290 & 836 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Keep them.}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{K9. No unique flow identifier}
+\addcontentsline{toc}{subsubsection}{K9. No unique flow identifier}
+\meta{5.3 flow key}{483,517 / 1,344 / 1,306,753 / 612 rows share a key}
+
+NetFlow has no flow ID. The natural key (addresses, ports, protocol, start time) is shared by rows that are different flows, because the timestamps only have millisecond resolution and the exporter splits long conversations.
+
+\example
+\begin{center}\fit{\begin{tabular}{lllll}
+\toprule
+\textbf{} & \textbf{UNSW} & \textbf{CIC-2018} & \textbf{ToN-IoT} & \textbf{BoT-IoT} \\
+\midrule
+non-duplicate rows sharing a key & 483,517 & 1,344 & 1,306,753 & 612 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{No action; never deduplicate on the key. Only exact duplicates are removed (U4, C4, T4).}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{K10. Many statistical outliers}
+\addcontentsline{toc}{subsubsection}{K10. Many statistical outliers}
+\meta{6.1 IQR / z-score + 6.2 box plots}{IQR flags 5--25\% of the flows per column}
+
+Traffic is extremely skewed (skewness up to 4,953): most flows are tiny and a few are huge. The IQR rule flags whatever is far from the majority class, so in UNSW 100\% of attacks are "outliers" in TTL, and in BoT-IoT (99.7\% attacks) Benign is the outlier.
+
+No physical limit is broken (6.3) apart from K6 and M9: the extremes are real traffic and often the attack itself.
+
+\decision{Keep every outlier; use a log transform in feature engineering.}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{K11. Near-constant columns differ per dataset}
+\addcontentsline{toc}{subsubsection}{K11. Near-constant columns differ per dataset}
+\meta{7.1 near-constant}{e.g. \texttt{SRC\_\allowbreak{}TO\_\allowbreak{}DST\_\allowbreak{}IAT\_\allowbreak{}MIN}, \texttt{FTP\_\allowbreak{}COMMAND\_\allowbreak{}RET\_\allowbreak{}CODE}}
+
+A column that is constant in one dataset can be informative in another: \texttt{SRC\_\allowbreak{}TO\_\allowbreak{}DST\_\allowbreak{}IAT\_\allowbreak{}MIN} is 99.9\% zero in UNSW but has a median of 3,115 ms in BoT-IoT; the FTP code is 100\% zero in CIC-2018 and BoT-IoT but real in UNSW and ToN-IoT; BoT-IoT's retransmission columns are 99.94\% zero.
+
+\example
+\begin{center}\fit{\begin{tabular}{lllll}
+\toprule
+\textbf{Column} & \textbf{UNSW} & \textbf{CIC-2018} & \textbf{ToN-IoT} & \textbf{BoT-IoT} \\
+\midrule
+SRC\_TO\_DST\_IAT\_MIN & 99.9\% zero & not constant & not constant & not constant \\
+FTP\_COMMAND\_RET\_CODE & real codes & 100\% zero & 99.7\% zero & 100\% zero \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Keep for now; decide in feature selection on the merged data (the FTP code is excluded by M10).}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{K12. Very high correlations between columns}
+\addcontentsline{toc}{subsubsection}{K12. Very high correlations between columns}
+\meta{7.4 correlation}{pairs above 0.98, different in each dataset}
+
+Some columns move together almost perfectly (e.g. \texttt{FLOW\_\allowbreak{}DURATION\_\allowbreak{}MILLISECONDS} and \texttt{DURATION\_\allowbreak{}IN} in all four datasets; \texttt{OUT\_\allowbreak{}BYTES} and \texttt{OUT\_\allowbreak{}PKTS} in BoT-IoT). Correlated is not identical, and the pairs differ per dataset.
+
+\decision{Decide in feature selection on the merged data, with one rule for the whole team.}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{K13. Normal traffic looks different in every network}
+\addcontentsline{toc}{subsubsection}{K13. Normal traffic looks different in every network}
+\meta{cross-dataset Benign comparison}{medians and overlap of Benign behaviours}
+
+A typical Benign flow is a different thing in each network: an office network, an IoT testbed and a lab have different applications and devices. Almost no Benign behaviour of one network appears in another; the only real overlap is ToN-IoT with CIC-2018 (28\%). Second table: \% of the row's Benign flows whose exact behaviour also appears as Benign in the column.
+
+This is not an error to fix; it is exactly what makes detection on an unseen network hard.
+
+\example
+\begin{center}\fit{\begin{tabular}{llllll}
+\toprule
+\textbf{Dataset} & \texttt{IN\_BYTES} & \texttt{IN\_PKTS} & \texttt{FLOW\_DURATION\_MILLISECONDS} & \texttt{LONGEST\_FLOW\_PKT} & \textbf{flows} \\
+\midrule
+UNSW & 1,684 & 19 & 28 & 510 & 2,237,731 \\
+CIC-2018 & 128 & 2 & 39 & 157 & 17,514,626 \\
+ToN-IoT & 52 & 1 & 1 & 52 & 16,792,214 \\
+BoT-IoT & 40 & 1 & 0 & 40 & 51,989 \\
+\bottomrule
+\end{tabular}}\end{center}
+\begin{center}\fit{\begin{tabular}{lllll}
+\toprule
+\textbf{Benign of} & \textbf{UNSW} & \textbf{CIC-2018} & \textbf{ToN-IoT} & \textbf{BoT-IoT} \\
+\midrule
+UNSW & 100 & 0 & 0 & 0 \\
+CIC-2018 & 0 & 100 & 1.65 & 0.07 \\
+ToN-IoT & 0 & 28.45 & 100 & 0.02 \\
+BoT-IoT & 0 & 0.18 & 1.62 & 100 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Keep. It is measured, not corrected: SQ3 tests a model on a dataset it has not seen, and K13 is the explanation if it fails.}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{K14. The same attack family behaves differently between networks}
+\addcontentsline{toc}{subsubsection}{K14. The same attack family behaves differently between networks}
+\meta{cross-dataset DoS comparison}{Denial of service in all four datasets}
+
+Denial of service is the only family present in all four datasets, but the tools and therefore the flows differ: a typical ToN-IoT DDoS flow is 2 packets lasting 1 ms, a BoT-IoT DoS flow is 6 packets lasting 31 s, a UNSW DoS flow 10 packets in half a second, and CIC-2018 ranges from 1-packet Slowloris flows to 7 MB LOIC-UDP floods lasting two minutes. The medians below differ by orders of magnitude.
+
+\example
+\begin{center}\fit{\begin{tabular}{llllll}
+\toprule
+\textbf{Dataset: label} & \texttt{IN\_BYTES} & \texttt{IN\_PKTS} & \texttt{FLOW\_DURATION\_MILLISECONDS} & \texttt{LONGEST\_FLOW\_PKT} & \textbf{flows} \\
+\midrule
+UNSW: DoS & 792 & 10 & 561 & 368.5 & 5,980 \\
+CIC-2018: DDoS HOIC & 521 & 5 & 20 & 975 & 1,032,311 \\
+CIC-2018: DDoS LOIC-UDP & 7,226,700 & 120,445 & 120,551 & 60 & 3,450 \\
+CIC-2018: DDoS LOIC-HTTP & 232 & 5 & 20,577 & 1,004 & 288,589 \\
+CIC-2018: DoS GoldenEye & 689 & 5 & 7,007 & 1,024 & 61,300 \\
+CIC-2018: DoS Hulk & 13,784 & 109 & 85,996 & 987 & 100,076 \\
+CIC-2018: DoS SlowHTTPTest & 60 & 1 & 1 & 60 & 105,550 \\
+CIC-2018: DoS Slowloris & 282 & 1 & 1 & 282 & 36,040 \\
+ToN-IoT: DDoS & 112 & 2 & 1 & 60 & 4,141,256 \\
+ToN-IoT: DoS & 3,720 & 93 & 150 & 40 & 203,456 \\
+BoT-IoT: DDoS & 420 & 6 & 20,067 & 140 & 7,150,882 \\
+BoT-IoT: DoS & 360 & 6 & 31,030 & 28 & 8,034,190 \\
+\bottomrule
+\end{tabular}}\end{center}
+\begin{center}\fit{\begin{tabular}{lllll}
+\toprule
+\textbf{Family: dataset label} & \texttt{IN\_PKTS} & \texttt{IN\_BYTES} & \texttt{OUT\_BYTES} & \texttt{FLOW\_DURATION\_MILLISECONDS} \\
+\midrule
+Credential: CIC-2018 SSH brute force & 23 & 3,148 & 3,869 & 375 \\
+Credential: CIC-2018 FTP brute force & 1 & 60 & 40 & 1 \\
+Credential: ToN-IoT Password & 5 & 415 & 921 & 20 \\
+Web: CIC-2018 XSS & 6 & 3,168 & 0 & 89,479 \\
+Web: CIC-2018 SQL injection & 6 & 3,168 & 0 & 89,479 \\
+Web: ToN-IoT XSS & 5 & 574 & 334 & 26 \\
+Web: ToN-IoT Injection & 5 & 514 & 2,239 & 289 \\
+Malware: CIC-2018 Bot & 5 & 538 & 341 & 11 \\
+Malware: ToN-IoT Backdoor & 6 & 288 & 240 & 1,500 \\
+Recon: ToN-IoT Scanning & 1 & 44 & 0 & 1 \\
+Recon: BoT-IoT Reconnaissance & 1 & 44 & 40 & 3 \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Keep. This is the question SQ2 asks; the EDA compares the families across networks with statistical tests. The second table extends the comparison to the other shared families (office network CIC-2018 against the IoT networks): Credential attacks and Web attacks also differ in service and size, while Reconnaissance looks alike in the two IoT networks and bot / backdoor traffic looks alike across both kinds of network (port 8080, 5--6 packets).}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{K15. Two target columns}
+\addcontentsline{toc}{subsubsection}{K15. Two target columns}
+\meta{1.2 \texttt{Label} vs \texttt{Attack}}{0 disagreements in all four datasets}
+
+\texttt{Label} (0/1) agrees with \texttt{Attack} on every row of every dataset. \texttt{map\_\allowbreak{}labels()} adds \texttt{is\_\allowbreak{}attack}, which is identical to \texttt{Label}; the targets after cleaning are \texttt{is\_\allowbreak{}attack}, \texttt{attack\_\allowbreak{}family} and \texttt{attack\_\allowbreak{}label}.
+
+\decision{Drop \texttt{Label} after \texttt{map\_\allowbreak{}labels()} (two copies of the same target only invite mistakes); keep the raw \texttt{Attack} name for traceability. None of these columns is ever a model feature.}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{K16. Errors in the official documentation}
+\addcontentsline{toc}{subsubsection}{K16. Errors in the official documentation}
+\meta{0.3 feature dictionary}{one document for all four datasets}
+
+\texttt{NetFlow\_\allowbreak{}v3\_\allowbreak{}Features.csv} has three IAT descriptions copied from the minimum ("Minimum" for MAX, AVG and STDDEV), \texttt{DURATION\_\allowbreak{}OUT} described as client to server, \texttt{...\_\allowbreak{}SECOND\_\allowbreak{}BYTES} described as bytes per second (it is per millisecond, direction swapped), trailing spaces in the names, typos ("Arrval", "Sandard Deviaion"), and broken characters in the description of \texttt{NUM\_\allowbreak{}PKTS\_\allowbreak{}1024\_\allowbreak{}TO\_\allowbreak{}1514\_\allowbreak{}BYTES} ("> ?? 1024", an encoding error, found by Cyrine Chabbar). The BoT-IoT web page also has wrong row counts (B4).
+
+\example
+\begin{center}\fit{\begin{tabular}{lll}
+\toprule
+\textbf{Column} & \textbf{official description} & \textbf{correct meaning} \\
+\midrule
+DST\_TO\_SRC\_IAT\_MAX & Minimum Inter-Packet Arrval Time (dst > src) & Maximum gap between packets, server to client \\
+DURATION\_OUT & Client to Server stream duration (msec) & Server to client stream duration \\
+SRC\_TO\_DST\_SECOND\_BYTES & Src to dst Bytes/sec & OUT bytes per millisecond \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Report them; use our corrected descriptions.}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{K17. Average gap between packets smaller than the minimum gap}
+\addcontentsline{toc}{subsubsection}{K17. Average gap between packets smaller than the minimum gap}
+\meta{4.4 extra rules (found in Cyrine Chabbar's ToN-IoT check)}{316 / 862,525 / 456,179 / 43,806 flows}
+
+An average can never be smaller than the minimum of the same values, yet \texttt{...\_\allowbreak{}IAT\_\allowbreak{}AVG} < \texttt{...\_\allowbreak{}IAT\_\allowbreak{}MIN} on these flows. The arithmetic shows why: a CIC-2018 flow with 4 packets has minimum = maximum = 70 ms but an average of 23 ms over a 71 ms flow. Three gaps that add up to 70 ms and average 23 ms are 0, 0 and 70 ms: the packets came in a burst that rounds to 0 ms.
+
+So the \textbf{average is right} and the \textbf{minimum skips the 0-ms gaps} (it reports the smallest non-zero gap). It is an exporter convention, not corrupted data; it is most common in bursty traffic (DDoS, XSS, HOIC).
+
+\example
+\begin{center}\fit{\begin{tabular}{lllll}
+\toprule
+\textbf{} & \textbf{UNSW} & \textbf{CIC-2018} & \textbf{ToN-IoT} & \textbf{BoT-IoT} \\
+\midrule
+flows & 316 & 862,525 & 456,179 & 43,806 \\
+\bottomrule
+\end{tabular}}\end{center}
+\begin{center}\fit{\begin{tabular}{lllllllll}
+\toprule
+\textbf{Row} & \texttt{IN\_PKTS} & \texttt{SRC\_TO\_DST\_IAT\_MIN} & \texttt{SRC\_TO\_DST\_IAT\_AVG} & \texttt{OUT\_PKTS} & \texttt{DST\_TO\_SRC\_IAT\_MIN} & \texttt{DST\_TO\_SRC\_IAT\_AVG} & \textbf{Attack} & \textbf{dataset} \\
+\midrule
+9656 & 1 & 0 & 0 & 3 & 6 & 1 & Benign & UNSW \\
+47 & 5 & 6 & 1 & 5 & 0 & 2 & Benign & CIC-2018 \\
+6436 & 2 & 718 & 718 & 3 & 718 & 359 & Benign & ToN-IoT \\
+8 & 6 & 3,738 & 3,557 & 4 & 3,738 & 2,913 & DDoS & BoT-IoT \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Keep the rows and values. Read \texttt{IAT\_\allowbreak{}MIN} as "smallest non-zero gap" in the report; feature selection decides whether \texttt{IAT\_\allowbreak{}MIN} is kept (K11).}
+\end{problem}
+
+\begin{problem}
+\subsubsection*{K18. TCP window 0 although packets were sent}
+\addcontentsline{toc}{subsubsection}{K18. TCP window 0 although packets were sent}
+\meta{4.4 extra rules (found in Cyrine Chabbar's ToN-IoT check)}{45,884 / 1,371,482 / 3,082,721 / 2,936,334 flows}
+
+The TCP window is the amount of data a side is ready to receive; 0 looks like "not recorded", as TTL = 0 does.
+
+For CIC-2018, ToN-IoT and BoT-IoT the cause is legitimate: in the 60,000-flow samples, 100\% of the server-side cases (89--100\% of the client-side ones) are flows where that side sent a \textbf{reset} (RST), which carries window 0 by design. These are refused connections: the SYN floods and scans of BoT-IoT (2.9 million) and ToN-IoT. UNSW is the exception: its 45,833 client-side zeros contain no reset, so there the 0 is unexplained.
+
+\example
+\begin{center}\fit{\begin{tabular}{lllll}
+\toprule
+\textbf{} & \textbf{UNSW} & \textbf{CIC-2018} & \textbf{ToN-IoT} & \textbf{BoT-IoT} \\
+\midrule
+TCP flows with window 0 despite packets & 45,884 & 1,371,482 & 3,082,721 & 2,936,334 \\
+  client side (IN) & 45,833 & 751,664 & 545,492 & 6,042 \\
+  server side (OUT) & 51 & 620,974 & 2,546,494 & 2,930,292 \\
+\bottomrule
+\end{tabular}}\end{center}
+\begin{center}\fit{\begin{tabular}{llllll}
+\toprule
+\textbf{Row} & \textbf{dataset} & \texttt{OUT\_PKTS} & \texttt{TCP\_WIN\_MAX\_OUT} & \texttt{SERVER\_TCP\_FLAGS} & \textbf{Attack} \\
+\midrule
+1514968 & UNSW & 1 & 0 & 24 & Benign \\
+711896 & CIC-2018 & 1 & 0 & 20 & FTP-BruteForce \\
+8055771 & ToN-IoT & 1 & 0 & 20 & Benign \\
+2783670 & BoT-IoT & 1 & 0 & 20 & DDoS \\
+\bottomrule
+\end{tabular}}\end{center}
+\decision{Keep. A window of 0 on a reset is real behaviour (and a useful sign of refused connections). In UNSW, treat the client-side 0 as "unknown" in the EDA.}
+\end{problem}
+
+\newpage
+\section{Sampling, split and evaluation plan}
+This section turns the decisions of sections 1--5 into one plan for phase 3. It replaces the earlier rule "at most 200,000 flows per label": that cap would have kept only 15--40\% of the different attack behaviours of the large classes and turned Benign into 15\% of the data. The plan below was chosen without a cost limit; it still fits in memory (about 4 GB).
+
+\begin{problem}\subsection{The rule}
+\begin{enumerate}
+\item \textbf{Clean each dataset first} (sections 1--4): mislabelled rows removed (C5, C6, C7, T5), broken columns dropped.
+\item \textbf{One row per different behaviour, Benign and attack alike, no upper limit.} Only exact repeats are removed (a behaviour is everything the flow did, leaving out the IP addresses, source port, timestamps and DNS query ID). A \texttt{count} column keeps how many times each behaviour appeared. It is \textbf{never} a model feature. If one behaviour has two labels inside a dataset, it keeps one row per label.
+\item \textbf{Balance with weights, not by deleting rows:} class weights so that every class counts equally (rare attacks such as Worms count as much as Benign), and network weights so that every dataset counts equally (CIC-2018's 8 million Benign rows do not outweigh UNSW).
+\item \textbf{Grouped split 80 / 20 by behaviour:} a behaviour is never in both the training and the test set.
+\item \textbf{Realistic test sets: 95\% Benign / 5\% attacks,} the way a real network looks; also reported at 99 / 1 to show how false alarms grow when attacks are rarer.
+\end{enumerate}
+\end{problem}
+\begin{problem}\subsection{The numbers}
+Raw data against the final dataset (one row per behaviour, after the before-merge removals). The data shrinks from 67 to about 17.6 million rows, and no different behaviour is lost; Benign becomes the majority again, as in most real networks.
+
+\begin{center}\fit{\begin{tabular}{llllllll}
+\toprule
+\textbf{Dataset} & \textbf{raw Benign} & \textbf{raw attack} & \textbf{raw Benign \%} & \textbf{final Benign} & \textbf{final attack} & \textbf{final total} & \textbf{final Benign \%} \\
+\midrule
+UNSW & 2,237,731 & 127,693 & 94.6\% & 1,307,351 & 97,749 & 1,405,100 & 93.0\% \\
+CIC-2018 & 17,514,626 & 2,600,903 & 87.1\% & 8,178,232 & 767,560 & 8,945,792 & 91.4\% \\
+ToN-IoT & 16,792,214 & 10,728,046 & 61.0\% & 2,282,642 & 3,355,000 & 5,637,642 & 40.5\% \\
+BoT-IoT & 51,989 & 16,881,819 & 0.3\% & 21,951 & 1,541,364 & 1,563,315 & 1.4\% \\
+All four & 36,596,560 & 30,338,461 & 54.7\% & 11,790,176 & 5,761,673 & 17,551,849 & 67.2\% \\
+\bottomrule
+\end{tabular}}\end{center}
+The cleaning produced exactly these numbers. The merge then merged one more row (decision M9), so the merged table has \textbf{17,551,848 rows} standing for 63,012,224 flows (the raw flows minus the exact duplicates and the mislabelled flows removed in sections 2 and 3).
+
+\end{problem}
+\begin{problem}\subsection{Is it enough?}
+What a model learns from is the number of \textbf{different behaviours}, not the number of flows: FTP-BruteForce has 386,720 flows but one single behaviour. Thresholds: at least 1,000 different behaviours = enough to learn and report the label; 100--999 = small (label with a higher class weight, always also reported at family level); under 100 = too small (scored only inside its family). Result: 29 attack labels are enough, 3 small, 2 too small, and 2 removed entirely by the before-merge decisions:
+
+\begin{center}\fit{\begin{tabular}{lllll}
+\toprule
+\textbf{Label} & \textbf{flows} & \textbf{different behaviours kept} & \textbf{status} & \textbf{family} \\
+\midrule
+UNSW: Worms & 158 & 146 & small & Malware and botnets \\
+CIC-2018: FTP brute force & 386,720 & 1 & too small & Credential attacks \\
+CIC-2018: DoS SlowHTTPTest & 105,550 & 0 & removed (C5-C7) & Denial of service \\
+CIC-2018: Web brute force & 1,618 & 910 & small & Credential attacks \\
+CIC-2018: XSS & 480 & 0 & removed (C5-C7) & Web and injection \\
+CIC-2018: SQL injection & 440 & 53 & too small & Web and injection \\
+BoT-IoT: Theft & 1,615 & 448 & small & Data theft \\
+\bottomrule
+\end{tabular}}\end{center}
+Every family has enough data except \emph{Data theft} (Theft, BoT-IoT only): it can be learned, but it cannot be tested on an unseen network because no other dataset contains it. Small labels are reported with repeated grouped cross-validation (5 folds), because one test split holds only a few dozen of their behaviours. Synthetic data (e.g. SMOTE) is never used in a test set.
+
+\end{problem}
+\begin{problem}\subsection{Why the repeat count is not used as the training weight}
+Training with \texttt{weight = count} is mathematically the same as keeping all the copies: a row with weight 41,000 counts like 41,000 identical rows, so the floods would dominate again. The count is used in two other ways: optionally damped as \texttt{log(1 + count)} in training, and as the weight in a second evaluation that measures the model on the traffic as it really occurred. This follows common practice: removing duplicates is how NSL-KDD repaired KDD Cup 99 (Tavallaee et al., 2009), and ignoring the real attack rate is listed as a pitfall in Arp et al., "Dos and Don'ts of Machine Learning in Computer Security" (USENIX Security 2022).
+
+\end{problem}
+\begin{problem}\subsection{Split, tests and metrics}
+\begin{itemize}
+\item \textbf{Test 1, same network:} train and test inside one dataset (the best case).
+\item \textbf{Test 2, all networks mixed:} the merged data, split stratified by dataset and family.
+\item \textbf{Test 3, unseen network (SQ3):} train on three datasets, test on the fourth, four rounds. Everything learned from data (scaling, feature selection, the M10 fingerprint check) is decided on the three training datasets only.
+\item \textbf{Metrics:} macro-F1, recall per class, Benign recall and the false-alarm rate on the realistic test sets; each at three levels: attack or not, family, label. A family is only scored on a test network that contains it.
+\end{itemize}
+\end{problem}
+\begin{problem}\subsection{The order of phase 3}
+\begin{enumerate}
+\item For each dataset: its own before-merge decisions (column fixes, exact duplicates, wrong labels) $\rightarrow$ one row per behaviour with \texttt{count} $\rightarrow$ \texttt{clean()} $\rightarrow$ \texttt{map\_\allowbreak{}labels()}, then drop \texttt{Label} (identical to \texttt{is\_\allowbreak{}attack}) $\rightarrow$ checks $\rightarrow$ save. The collapse runs \textbf{before} \texttt{clean()} drops the IP addresses, so two machines doing the same thing still count as two flows.
+\item Because exact duplicates are removed first, C6 and C7 remove fewer rows in the cleaning than counted in phase 2 (CIC-2018: 30 instead of 60 port-21 SSH flows, 95,558 instead of 150,600 Benign-identical attack flows). These are the same flows minus their duplicates; the result is unchanged.
+\item Stack the four files; add \texttt{network\_\allowbreak{}type} from \texttt{DATASETS} in \texttt{config.py} ("Mixed lab", "Enterprise / office", "IoT / industrial", "IoT botnet") for the analysis; like \texttt{source\_\allowbreak{}dataset}, it is \textbf{never} a model feature.
+\item Apply the \textbf{fixed} after-merge rules (section 5.1: columns dropped, ICMP fields to 0, DNS TTL rule, \texttt{ambiguous\_\allowbreak{}across\_\allowbreak{}sources} flag) and run \texttt{validate()} again.
+\item Split (grouped by behaviour; one dataset held out for test 3).
+\item Fit everything \textbf{learned from data} on the training part only: scaling, log transform, feature selection, correlation threshold.
+\end{enumerate}
+\end{problem}
+\begin{problem}\subsection{Limits}
+\begin{itemize}
+\item BoT-IoT has almost no normal traffic (21,951 different Benign behaviours); its realistic test set is small and its Benign results are reported with that caveat.
+\item ToN-IoT is the largest part of the final data because its attacks are very varied; network weights and per-dataset results keep it from hiding the others.
+\item 95 / 5 is an assumption about real networks; the 99 / 1 results show how sensitive the conclusions are to it.
+\item A "different behaviour" means exactly equal in every column; two floods that differ by 1 ms count as two. "100\% covered" is therefore a strict, safe statement.
+\end{itemize}
+\end{problem}
+\end{document}

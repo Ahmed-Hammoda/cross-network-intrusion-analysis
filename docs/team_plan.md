@@ -7,8 +7,8 @@ contain is in [`notebooks/README.md`](../notebooks/README.md).
 
 | Member | Datasets | Notebooks | Also responsible for |
 |---|---|---|---|
-| Ahmed Hamouda | NF-UNSW-NB15-v3, NF-CSE-CIC-IDS2018-v3 | `01_unsw`, `02_cic18`, `06_merge_netflow` | Phase 1, NetFlow feature dictionary, final merge |
-| Cyrine Chabbar | NF-ToN-IoT-v3, NF-BoT-IoT-v3 | `03_ton`, `04_bot` | Dataset comparison table, class-distribution plots |
+| Ahmed Hamouda | NF-UNSW-NB15-v3, NF-CSE-CIC-IDS2018-v3 | `01_unsw`, `02_cic18`, `01_unsw_cleaning`, `02_cic18_cleaning`, `06_merge_netflow` | Phase 1, NetFlow feature dictionary, final merge |
+| Cyrine Chabbar | NF-ToN-IoT-v3, NF-BoT-IoT-v3 | `03_ton`, `04_bot`, `03_ton_cleaning`, `04_bot_cleaning` | Dataset comparison table, class-distribution plots |
 | Yassine Mtibaa | CICIoT2023 | `05_ciciot2023` | CICIoT2023 feature dictionary, "why not merged" section |
 
 `07_eda` and `08_feature_engineering` are shared: each member works in the sections assigned to

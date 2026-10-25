@@ -228,10 +228,70 @@ inflate the standard deviation. Box plots by family show that a value that is ex
 
 ---
 
+### NetFlow v3 — `UNSW`, `CIC18` (owner: Ahmed Hamouda), `ToN`, `BoT` (owner: Cyrine Chabbar)
+
+Code: `notebooks/01_unsw.ipynb`, `02_cic18.ipynb`, `03_ton.ipynb`, `04_bot.ipynb` (Steps 0–8 on **all rows**).
+`03_ton` and `04_bot` are Cyrine Chabbar's notebooks, completed with the checks from Ahmed Hamouda's analysis.
+Every problem, with its evidence, real examples from the data and the approved decision, is in
+[`report/data_problems/phase2_data_problems.pdf`](../report/data_problems/phase2_data_problems.pdf):
+problems that must be solved **before the merge** (one section per dataset) and problems solved **once on the
+merged table**, each split into "change the data" and "keep it as it is". The decisions are logged in
+[`decision_log.md`](decision_log.md).
+
+**Dimensions** — all four files have 55 columns: 53 features + `Label` (0/1) + `Attack` (class name).
+
+| | Official rows | Loaded rows | Match? |
+|---|---|---|---|
+| `UNSW` | 2,365,424 | 2,365,424 | Yes |
+| `CIC18` | 20,115,529 | 20,115,529 | Yes |
+| `ToN` | 27,520,260 | 27,520,260 | Yes |
+| `BoT` | 16,993,808 (official page) | 16,933,808 | No — typo on the official page; Theft is 1,615 flows, not 1,651 |
+
+**Class distribution** (flows in the raw file; `tables/<KEY>_labels.csv`)
+
+| Dataset | Benign | Attack | Largest attack labels | Smallest attack labels |
+|---|---|---|---|---|
+| `UNSW` | 2,237,731 (94.6 %) | 127,693 | Exploits 42,748, Fuzzers 33,816 | Worms 158, Analysis 1,226 |
+| `CIC18` | 17,514,626 (87.1 %) | 2,600,903 | DDoS HOIC 1,032,311, FTP brute force 386,720 | SQL injection 440, XSS 480 |
+| `ToN` | 16,792,214 (61.0 %) | 10,728,046 | DDoS 4,141,256, XSS 2,834,435 | Ransomware 3,971, MITM 6,013 |
+| `BoT` | 51,989 (0.3 %) | 16,881,819 | DoS 8,034,190, DDoS 7,150,882 | Theft 1,615 |
+
+**Main problems found** (codes as in the report)
+
+| Code | Problem | Decision |
+|---|---|---|
+| U2, B2 | `..._SECOND_BYTES` NaN / inf on zero-duration flows (65 % of BoT Benign) | Drop both columns before `clean()` |
+| U3, B3, C3, T3 | `L7_PROTO` stores two codes in one decimal number (float in UNSW / BoT, integer elsewhere) | Split into `L7_MAIN` + `L7_SUB` |
+| U4, C4, T4 | Exact duplicate rows (whole captures recorded twice in CIC18) | Remove |
+| C1, T1 | Label spellings missing from the taxonomy | Map with `map_labels`; 11 CIC18 entries added to `config.py` |
+| C5 | Same flow with two different labels (880 rows, all web attacks) | Remove all copies |
+| C6 | DoS SlowHTTPTest flows are refused FTP connections | Remove |
+| C7 | Attack labels on flows identical to Benign traffic of the same machines | Remove; no XSS flow remains in CIC18 |
+| T5 | XSS / injection labels on DNS traffic (port 53) | Remove |
+| U1, C2, T2, B1 | Strong imbalance (BoT inverted: 0.3 % Benign) | One row per behaviour + weights; no cap (report, section 6) |
+| U5, C8, T8, B4 | Very rare classes (Worms 158, Theft 1,615) | Keep every flow; report at family level too |
+| T6, B6, B7, U8, T7 | Attack flows that look like Benign or like another attack (DoS = DDoS) | Keep; documented limit of single-flow features |
+| M1–M12 | Problems of the merged table: codes stored as numbers, timestamps, IPs and TTL that reveal the label or the dataset, ICMP fields on TCP flows, copy columns, invalid DNS TTL, same behaviour with a different family in another dataset | Solved once on the merged table (see the report) |
+| K1–K18 | Zeros meaning "not applicable", exporter quirks, outliers, correlations | Keep; decided in EDA or feature selection |
+
+---
+
 ## Cross-dataset comparison (Cyrine Chabbar)
 
 One table comparing all five datasets: rows, columns, attack share, number of attack labels,
 network type, and the number of problems found in each.
+
+| Dataset | Network type | Rows | Columns | Attack share | Attack labels | Problems found |
+|---|---|---|---|---|---|---|
+| `UNSW` | Mixed lab | 2,365,424 flows | 55 | 5.4 % | 9 | 8 (U1–U8) |
+| `CIC18` | Enterprise / office | 20,115,529 flows | 55 | 12.9 % | 14 | 10 (C1–C10) |
+| `ToN` | IoT / industrial | 27,520,260 flows | 55 | 39.0 % | 9 | 9 (T1–T9) |
+| `BoT` | IoT botnet | 16,933,808 flows | 55 | 99.7 % | 4 | 7 (B1–B7) |
+| `IoT23` | Real IoT devices | 45,019,243 windows | 40 | 97.66 % | 33 | 18 (see its section) |
+
+The four NetFlow datasets also share 12 problems of the merged table (M1–M12) and 18 "keep as it is" findings
+(K1–K18). After cleaning (phase 3): UNSW 1,405,100 rows, CIC18 8,945,792, ToN 5,637,642, BoT 1,563,315 — one row
+per different behaviour; merged 17,551,848 rows standing for 63,012,224 flows.
 
 ## Feature dictionaries
 

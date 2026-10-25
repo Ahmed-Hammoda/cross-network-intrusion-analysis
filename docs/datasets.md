@@ -12,7 +12,7 @@ so it is analysed separately and linked to the others through the shared attack 
 | `UNSW` | NF-UNSW-NB15-v3 | Mixed lab network | 2,365,424 | 5.4% | 9 | 53 | Ahmed Hamouda |
 | `CIC18` | NF-CSE-CIC-IDS2018-v3 | Enterprise / office network | 20,115,529 | 12.93% | 6 | 53 | Ahmed Hamouda |
 | `ToN` | NF-ToN-IoT-v3 | IoT / industrial network | 27,520,260 | 38.98% | 9 | 53 | Cyrine Chabbar |
-| `BoT` | NF-BoT-IoT-v3 | IoT botnet network | 16,993,808 | 99.7% | 4 | 53 | Cyrine Chabbar |
+| `BoT` | NF-BoT-IoT-v3 | IoT botnet network | 16,933,808 | 99.7% | 4 | 53 | Cyrine Chabbar |
 | `IoT23` | CICIoT2023 | Real IoT devices (105) | 45,019,243 (packet windows) | 97.66% | 33 | 39 | Yassine Mtibaa |
 | | **Total** | | **~112 million** | | **54 labels** | | |
 
@@ -42,7 +42,7 @@ used different feature tools and could not be merged directly.
 |---|---|
 | Original dataset | UNSW-NB15, Australian Centre for Cyber Security (UNSW Canberra), 2015 |
 | How it was made | Synthetic normal and attack traffic generated with the IXIA PerfectStorm tool in a cyber range lab |
-| Flows | 2,365,424 (127,639 attacks, 2,237,731 benign) |
+| Flows | 2,365,424 (127,693 attacks, 2,237,731 benign) |
 | Attack classes | Fuzzers, Analysis, Backdoor, DoS, Exploits, Generic, Reconnaissance, Shellcode, Worms |
 | Why we use it | The widest variety of attack types; the only source of Exploits, Shellcode, Worms, Fuzzers, Generic |
 | Known issues | Strong imbalance (94.6% benign); Worms has only 158 flows; "Generic" and "Analysis" are broad umbrella categories |
@@ -75,10 +75,10 @@ used different feature tools and could not be merged directly.
 |---|---|
 | Original dataset | BoT-IoT, UNSW Canberra Cyber Range Lab |
 | How it was made | Simulated IoT devices attacked by botnet traffic |
-| Flows | 16,993,808 (16,881,819 attacks, 51,989 benign) |
+| Flows | 16,933,808 (16,881,819 attacks, 51,989 benign). The official page says 16,993,808, a typo: the two parts add up to 16,933,808, the number of rows in the file |
 | Attack classes | DDoS, DoS, Reconnaissance, Theft |
 | Why we use it | Large-scale IoT botnet floods; the only source of Theft (data theft, keylogging) |
-| Known issues | Almost entirely attacks (only 0.3% benign) — not used to describe normal traffic; Theft has only 1,651 flows |
+| Known issues | Almost entirely attacks (only 0.3% benign) — not used to describe normal traffic; Theft has only 1,615 flows (the official page says 1,651) |
 
 ## 5. CICIoT2023 — real IoT devices
 
@@ -101,5 +101,9 @@ used different feature tools and could not be merged directly.
 ## Memory and disk plan
 
 The full data is ~114 million rows, more than a 32 GB laptop can hold at once. So:
-load one file at a time → clean → map labels → sample (cap 200k flows per label, keep every
-flow of rarer labels) → save Parquet → free memory. Rare attacks are never lost.
+load one file at a time → clean → map labels → reduce → save Parquet → free memory. Rare attacks are never lost.
+
+- **NetFlow v3:** no cap. Exact repeats of a behaviour are collapsed into one row with a `count` column, so every
+  different behaviour is kept: 67 million flows become 17,551,848 rows (`data/processed/netflow_merged.parquet`).
+  Imbalance is handled later with class and network weights (`report/data_problems/phase2_data_problems.pdf`, section 6).
+- **CICIoT2023:** cap of 200k rows per label (`sample_per_label`), every row of rarer labels kept.

@@ -17,9 +17,9 @@ Update the status in your own rows when you finish a task, and commit with a mes
 
 | # | Phase | Day | Rubric points | Status |
 |---|---|---|---|---|
-| 1 | Business understanding | Sat | Report 4 | ✅ Done (review pending) |
-| 2 | Data understanding | Sat | Code 5 + Report 4 | ⬜ To do |
-| 3 | Data preprocessing | Sun | Code 12 + Report 5 | ⬜ To do |
+| 1 | Business understanding | Sat | Report 4 | ✅ Done |
+| 2 | Data understanding | Sat | Code 5 + Report 4 | ✅ Done |
+| 3 | Data preprocessing | Sun | Code 12 + Report 5 | ✅ Done |
 | 4 | Exploratory data analysis | Mon | Code 13 + Report 6 | ⬜ To do |
 | 5 | Feature engineering | Tue | Code 7 + Report 3 | ⬜ To do |
 | 6 | Presentation | Wed | 35 | ⬜ To do |
@@ -34,7 +34,7 @@ Update the status in your own rows when you finish a task, and commit with a mes
 | Work split by dataset, no dependencies | All | ✅ Done |
 | Shared contract `src/config.py` | Ahmed Hamouda | ✅ Done |
 | GitHub repository and documentation | Ahmed Hamouda | ✅ Done |
-| Clone the repo and `pip install -r requirements.txt` | Cyrine Chabbar | ✅ To do |
+| Clone the repo and `pip install -r requirements.txt` | Cyrine Chabbar | ✅ Done |
 | Clone the repo and `pip install -r requirements.txt` | Yassine Mtibaa | ✅ Done |
 
 ---
@@ -55,22 +55,23 @@ Written in [`phase1_business_understanding.md`](phase1_business_understanding.md
 
 Diagnosis only — find, measure and propose; nothing is changed until phase 3.
 Details of every check: [`phase2_data_understanding.md`](phase2_data_understanding.md) (follows lab Part 1).
+Every NetFlow problem and its approved decision: [`report/data_problems/phase2_data_problems.pdf`](../report/data_problems/phase2_data_problems.pdf).
 
 | # | Task | UNSW | CIC18 | ToN | BoT | IoT23 |
 |---|---|---|---|---|---|---|
-| 2.1 | Initial inspection: structure, rows/columns vs official, data types and units, first issues | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
-| 2.2 | Missing and infinite values: count, % per column, plot, strategy per column | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
-| 2.3 | Data type issues: text→numeric, timestamps→datetime, codes→categorical, label spellings | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
-| 2.4 | Outlier detection: IQR + z-score, box plots by family, legitimate vs error, planned treatment | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
-| 2.5 | Consistency: duplicates, identifier uniqueness, formatting, logical checks (`validate`) | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
-| 2.6 | Class distribution (flows per attack label) | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
-| 2.7 | Summary table: every problem → planned solution (no code) | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
+| 2.1 | Initial inspection: structure, rows/columns vs official, data types and units, first issues | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 2.2 | Missing and infinite values: count, % per column, plot, strategy per column | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 2.3 | Data type issues: text→numeric, timestamps→datetime, codes→categorical, label spellings | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 2.4 | Outlier detection: IQR + z-score, box plots by family, legitimate vs error, planned treatment | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 2.5 | Consistency: duplicates, identifier uniqueness, formatting, logical checks (`validate`) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 2.6 | Class distribution (flows per attack label) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 2.7 | Summary table: every problem → planned solution (no code) | ✅ | ✅ | ✅ | ✅ | ✅ |
 | | **Owner** | Ahmed | Ahmed | Cyrine | Cyrine | Yassine |
 
 | # | Shared task | Owner | Status |
 |---|---|---|---|
 | 2.8 | NetFlow v3 feature dictionary (53 features: name, meaning, unit, type) | Ahmed Hamouda | ⬜ To do |
-| 2.9 | Cross-dataset comparison table and class-distribution plots | Cyrine Chabbar | ⬜ To do |
+| 2.9 | Cross-dataset comparison table and class-distribution plots | Cyrine Chabbar | 🔄 Table done ([`phase2_data_understanding.md`](phase2_data_understanding.md)); plots to do |
 | 2.10 | CICIoT2023 feature dictionary (39 features + label, see [ciciot_feature_dictionary.md](ciciot_feature_dictionary.md)) | Yassine Mtibaa | ✅ Done |
 
 ## Phase 3 — Data preprocessing: cleaning (Sun)
@@ -79,21 +80,25 @@ Apply the solutions planned in phase 2, with before/after evidence for every ste
 
 | # | Task | UNSW | CIC18 | ToN | BoT | IoT23 |
 |---|---|---|---|---|---|---|
-| 3.1 | Handle missing / infinite values (strategy per column, justified, before/after) | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
-| 3.2 | Data type conversion (timestamps→datetime, codes→category), verified | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
-| 3.3 | Standardise categorical values: column names, label spellings → shared taxonomy (`map_labels`) | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
-| 3.4 | Outlier treatment: remove errors, keep legitimate ones; document removed vs kept | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
-| 3.5 | Remove duplicates; drop identifier columns | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
-| 3.6 | Data validation (`validate` returns 0 violations) + data quality report | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
-| 3.7 | Stratified sampling per label + save cleaned Parquet | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
+| 3.1 | Handle missing / infinite values (strategy per column, justified, before/after) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 3.2 | Data type conversion (timestamps→datetime, codes→category), verified | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 3.3 | Standardise categorical values: column names, label spellings → shared taxonomy (`map_labels`) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 3.4 | Outlier treatment: remove errors, keep legitimate ones; document removed vs kept | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 3.5 | Remove duplicates; drop identifier columns | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 3.6 | Data validation (`validate` returns 0 violations) + data quality report | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 3.7 | Stratified sampling per label + save cleaned Parquet | ✅ | ✅ | ✅ | ✅ | ✅ |
 | | **Owner** | Ahmed | Ahmed | Cyrine | Cyrine | Yassine |
+
+NetFlow notebooks: `01_unsw_cleaning`, `02_cic18_cleaning`, `03_ton_cleaning`, `04_bot_cleaning`. For NetFlow, 3.7 follows
+the approved plan (section 6 of the data-problems report) instead of the 200k cap: one row per different behaviour
+with a `count` column, no upper limit; imbalance is handled with class and network weights after the split.
 
 | # | Shared task | Owner | Status |
 |---|---|---|---|
-| 3.8 | Merge the 4 NetFlow files and run the post-merge checks | Ahmed Hamouda | ⬜ To do |
-| 3.9 | Explain merging / integration decisions | Ahmed Hamouda | ⬜ To do |
+| 3.8 | Merge the 4 NetFlow files and run the post-merge checks | Ahmed Hamouda | ✅ Done (`06_merge_netflow`: 17,551,848 rows, `validate` = 0) |
+| 3.9 | Explain merging / integration decisions | Ahmed Hamouda | ✅ Done (data-problems report, section 5) |
 | 3.10 | Explain why CICIoT2023 is kept separate (notebook 05 end + `datasets.md`) | Yassine Mtibaa | ✅ Done |
-| 3.11 | Log every decision in [`decision_log.md`](decision_log.md) | All | ⬜ To do |
+| 3.11 | Log every decision in [`decision_log.md`](decision_log.md) | All | ✅ Done |
 
 ## Phase 4 — Exploratory data analysis (Mon)
 

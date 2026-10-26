@@ -20,15 +20,15 @@ has never seen? Sub-questions in [Phase 1](docs/phase1_business_understanding.md
 
 ## Phases
 
-| # | Phase | Day |
-|---|---|---|
-| 1 | Business understanding — context, problem, research questions, success criteria | Sat |
-| 2 | Data understanding — rows and columns, data types and units, problems, solutions (without code) | Sat |
-| 3 | Data preprocessing — handle every problem with code, outliers, merging / integration decisions | Sun |
-| 4 | Exploratory data analysis — descriptive statistics and plots, correlations, relationships, hypothesis tests | Mon |
-| 5 | Feature engineering — selection, extraction / creation / encoding, scaling / transformation, final feature set | Tue |
-| 6 | Presentation | Wed |
-| 7 | Report | Wed |
+| # | Phase |
+|---|---|
+| 1 | Business understanding — context, problem, research questions, success criteria |
+| 2 | Data understanding — rows and columns, data types and units, problems, solutions (without code) |
+| 3 | Data preprocessing — handle every problem with code, outliers, merging / integration decisions |
+| 4 | Exploratory data analysis — descriptive statistics and plots, correlations, relationships, hypothesis tests |
+| 5 | Feature engineering — selection, extraction / creation / encoding, scaling / transformation, final feature set |
+| 6 | Presentation |
+| 7 | Report |
 
 Progress on every task is tracked in the [task board](docs/TASK_BOARD.md).
 
@@ -36,7 +36,7 @@ Progress on every task is tracked in the [task board](docs/TASK_BOARD.md).
 
 | Document | Content |
 |---|---|
-| [Task board](docs/TASK_BOARD.md) | Every phase and task, owner, day and status (to do / in progress / done) |
+| [Task board](docs/TASK_BOARD.md) | Every phase and task, owner and status |
 | [Datasets](docs/datasets.md) | Description, provenance, size and known issues of each dataset |
 | [Attack taxonomy](docs/attack_taxonomy.md) | All 54 attacks described and grouped into 9 families |
 | [Phase 1 — Business understanding](docs/phase1_business_understanding.md) | Context, problem, research questions, success criteria |

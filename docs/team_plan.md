@@ -1,6 +1,6 @@
 # Team plan
 
-Tasks, days and status are tracked in the [task board](TASK_BOARD.md). What each notebook must
+Tasks and status are tracked in the [task board](TASK_BOARD.md). What each notebook must
 contain is in [`notebooks/README.md`](../notebooks/README.md).
 
 ## Ownership
@@ -13,16 +13,6 @@ contain is in [`notebooks/README.md`](../notebooks/README.md).
 
 `07_eda` and `08_feature_engineering` are shared: each member works in the sections assigned to
 them on the task board.
-
-## Schedule
-
-| Day | Phase |
-|---|---|
-| Sat | 1. Business understanding · 2. Data understanding |
-| Sun | 3. Data preprocessing |
-| Mon | 4. Exploratory data analysis |
-| Tue | 5. Feature engineering |
-| Wed | 6. Presentation · 7. Report |
 
 ## Why there are no dependencies between members
 

@@ -1,9 +1,6 @@
 # Task board
 
-Status: ✅ Done · 🔄 In progress · ⬜ To do
-
-Update the status in your own rows when you finish a task, and commit with a message like
-`board: phase 2 UNSW done`.
+Status: ✅ Done
 
 **Team:** Ahmed Hamouda · Cyrine Chabbar · Yassine Mtibaa
 
@@ -15,15 +12,15 @@ Update the status in your own rows when you finish a task, and commit with a mes
 
 ## Progress overview
 
-| # | Phase | Day | Rubric points | Status |
-|---|---|---|---|---|
-| 1 | Business understanding | Sat | Report 4 | ✅ Done |
-| 2 | Data understanding | Sat | Code 5 + Report 4 | ✅ Done |
-| 3 | Data preprocessing | Sun | Code 12 + Report 5 | ✅ Done |
-| 4 | Exploratory data analysis | Mon | Code 13 + Report 6 | 🔄 Done; IoT23 §7 (comparison with NetFlow) to re-run |
-| 5 | Feature engineering | Tue | Code 7 + Report 3 | 🔄 NetFlow done; IoT23 notebook to run |
-| 6 | Presentation | Wed | 35 | ⬜ To do |
-| 7 | Report | Wed | 25 | ⬜ To do |
+| # | Phase | Rubric points | Status |
+|---|---|---|---|
+| 1 | Business understanding | Report 4 | ✅ Done |
+| 2 | Data understanding | Code 5 + Report 4 | ✅ Done |
+| 3 | Data preprocessing | Code 12 + Report 5 | ✅ Done |
+| 4 | Exploratory data analysis | Code 13 + Report 6 | ✅ Done |
+| 5 | Feature engineering | Code 7 + Report 3 | ✅ Done |
+| 6 | Presentation | 35 | ✅ Done |
+| 7 | Report | 25 | ✅ Done |
 
 ## Setup (before phase 1)
 
@@ -39,7 +36,7 @@ Update the status in your own rows when you finish a task, and commit with a mes
 
 ---
 
-## Phase 1 — Business understanding (Sat)
+## Phase 1 — Business understanding
 
 Written in [`phase1_business_understanding.md`](phase1_business_understanding.md).
 
@@ -51,7 +48,7 @@ Written in [`phase1_business_understanding.md`](phase1_business_understanding.md
 | 1.4 | Success criteria | Ahmed Hamouda | ✅ Done |
 | 1.5 | Review and approve phase 1 | Cyrine Chabbar, Yassine Mtibaa | ✅ Done |
 
-## Phase 2 — Data understanding: exploration and quality assessment (Sat)
+## Phase 2 — Data understanding: exploration and quality assessment
 
 Diagnosis only — find, measure and propose; nothing is changed until phase 3.
 Details of every check: [`phase2_data_understanding.md`](phase2_data_understanding.md) (follows lab Part 1).
@@ -74,7 +71,7 @@ Every NetFlow problem and its approved decision: [`report/data_problems/phase2_d
 | 2.9 | Cross-dataset comparison table and class-distribution plots | Cyrine Chabbar, Ahmed Hamouda | ✅ Done (table in [`phase2_data_understanding.md`](phase2_data_understanding.md); plot `figures/NetFlow_eda_families.png`) |
 | 2.10 | CICIoT2023 feature dictionary (39 features + label, see [ciciot_feature_dictionary.md](ciciot_feature_dictionary.md)) | Yassine Mtibaa | ✅ Done |
 
-## Phase 3 — Data preprocessing: cleaning (Sun)
+## Phase 3 — Data preprocessing: cleaning
 
 Apply the solutions planned in phase 2, with before/after evidence for every step (follows lab Part 2).
 
@@ -100,7 +97,7 @@ with a `count` column, no upper limit; imbalance is left to class and network we
 | 3.10 | Explain why CICIoT2023 is kept separate (notebook 05 end + `datasets.md`) | Yassine Mtibaa | ✅ Done |
 | 3.11 | Log every decision in [`decision_log.md`](decision_log.md) | All | ✅ Done |
 
-## Phase 4 — Exploratory data analysis (Mon)
+## Phase 4 — Exploratory data analysis
 
 Each data source has one EDA notebook (follows lab 4): `07_eda_netflow` (merged NetFlow, summary in
 [`phase4_eda_netflow.md`](phase4_eda_netflow.md), report `report/eda/phase4_eda_report.pdf`) and `07_eda_iot23`
@@ -113,14 +110,14 @@ Each data source has one EDA notebook (follows lab 4): `07_eda_netflow` (merged 
 | 4.3 | Relationships between features and the target (`is_attack`, `attack_family`) | ✅ | ✅ |
 | 4.4 | Patterns: Benign vs attack per network, port range × family / flag fingerprints, DoS vs DDoS | ✅ | ✅ |
 | 4.5 | Normality check (→ non-parametric tests) | ✅ | ✅ |
-| 4.5 | Hypothesis tests | ✅ Mann–Whitney U (SQ1), Kolmogorov–Smirnov (SQ2) | ✅ chi-square protocol × family (SQ1), KS DoS vs DDoS |
-| 4.6 | Class imbalance (SQ3) | ✅ behaviours and flows per family and network | ✅ |
-| 4.7 | CICIoT2023 compared to NetFlow at family level (SQ2) | ✅ NetFlow values provided: `tables/NetFlow_family_concepts.csv` | 🔄 re-run §7 of `07_eda_iot23` with that table |
+| 4.6 | Hypothesis tests | ✅ Mann–Whitney U (SQ1), Kolmogorov–Smirnov (SQ2) | ✅ chi-square protocol × family (SQ1), KS DoS vs DDoS |
+| 4.7 | Class imbalance (SQ3) | ✅ behaviours and flows per family and network | ✅ |
+| 4.8 | CICIoT2023 compared to NetFlow at family level (SQ2) | ✅ NetFlow values provided: `tables/NetFlow_family_concepts.csv` | ✅ §7 of `07_eda_iot23` |
 
 **Removed from the plan:** Kruskal–Wallis + Dunn across families. The requirement asks for at least one justified test;
 the team covers SQ1 and SQ2 with Mann–Whitney U, chi-square and Kolmogorov–Smirnov, so a fourth test adds nothing.
 
-## Phase 5 — Feature engineering (Tue)
+## Phase 5 — Feature engineering
 
 Requirement: explain feature selection, extraction / creation, encoding and scaling / transformation; justify the final
 feature set. **There is no modelling in the project, so no train/test split:** the steps that learn from the data are
@@ -131,32 +128,32 @@ fitted on all the data and must be refitted on a training part before any model.
 
 | # | Task | Merged NetFlow (Ahmed Hamouda) | CICIoT2023 (Yassine Mtibaa) |
 |---|---|---|---|
-| 5.2–5.5 | Creation: time / rate, ratio and domain features | ✅ 9 created features | 🔄 written, not run yet |
-| 5.3 | Encoding of the code columns | ✅ port range, protocol, TCP flag bits, L7 protocol | 🔄 written, not run yet |
-| 5.6 | Transformation and scaling | ✅ log(1 + x), robust scaling | 🔄 written, not run yet |
-| 5.7 | Validation: before / after, new features vs target | ✅ | 🔄 written, not run yet |
-| 5.8 | Selection: fingerprints, near-constant, correlated pairs, mutual information | ✅ 72 → 59 features | 🔄 written, not run yet |
-| 5.9 | Final feature set: justification, data dictionary, export | ✅ `tables/NetFlow_fe_dictionary.csv` | 🔄 written, not run yet |
-| 5.10 | PCA (2-D view of the families) | ✅ | 🔄 written, not run yet |
+| 5.1 | Creation: time / rate, ratio and domain features | ✅ 9 created features | ✅ 6 created features |
+| 5.2 | Encoding of the code columns | ✅ port range, protocol, TCP flag bits, L7 protocol | ✅ protocol (one-hot) |
+| 5.3 | Transformation and scaling | ✅ log(1 + x), robust scaling | ✅ log(1 + x) and Yeo-Johnson, robust scaling |
+| 5.4 | Validation: before / after, new features vs target | ✅ | ✅ |
+| 5.5 | Selection: fingerprints, near-constant, correlated pairs, mutual information | ✅ 72 → 59 features | ✅ 51 → 31 features |
+| 5.6 | Final feature set: justification, data dictionary, export | ✅ `tables/NetFlow_fe_dictionary.csv` | ✅ `tables/IoT23_fe_dictionary.csv` |
+| 5.7 | PCA (2-D view of the families) | ✅ | ✅ |
 
-**Removed from the plan:** 5.1 train/test split and model-based importance (random forest): the project stops before
+**Removed from the plan:** train/test split and model-based importance (random forest): the project stops before
 modelling, and mutual information ranks the features without a model.
 
-## Phase 6 — Presentation (Wed)
+## Phase 6 — Presentation
 
 | # | Task | Owner | Status |
 |---|---|---|---|
-| 6.1 | Slides: problem, research questions, datasets, taxonomy | Ahmed Hamouda | ⬜ To do |
-| 6.2 | Slides: preprocessing, merge, EDA findings | Cyrine Chabbar | ⬜ To do |
-| 6.3 | Slides: hypothesis tests, features, conclusions, limitations | Yassine Mtibaa | ⬜ To do |
-| 6.4 | Rehearsal, timing and Q&A practice (everyone can explain everyone's code) | All | ⬜ To do |
+| 6.1 | Slides: problem, research questions, datasets, taxonomy | Ahmed Hamouda | ✅ Done |
+| 6.2 | Slides: preprocessing, merge, EDA findings | Cyrine Chabbar | ✅ Done |
+| 6.3 | Slides: hypothesis tests, features, conclusions, limitations | Yassine Mtibaa | ✅ Done |
+| 6.4 | Rehearsal, timing and Q&A practice (everyone can explain everyone's code) | All | ✅ Done |
 
-## Phase 7 — Report (Wed)
+## Phase 7 — Report
 
 | # | Task | Owner | Status |
 |---|---|---|---|
-| 7.1 | LaTeX report on Overleaf, sections for phases 1–5 | All (each writes their part) | ⬜ To do |
-| 7.2 | Conclusions and next steps: answer the main research question and SQ1–SQ3, limitations, future modelling plan | All | ⬜ To do |
-| 7.3 | Figures and tables with captions | All | ⬜ To do |
-| 7.4 | References (datasets and papers) | Ahmed Hamouda | ⬜ To do |
-| 7.5 | Final check: the code runs cleanly from a fresh clone | Cyrine Chabbar | ⬜ To do |
+| 7.1 | LaTeX report, sections for phases 1–6 ([`report/final/project_report.pdf`](../report/final/project_report.pdf)) | All (each writes their part) | ✅ Done |
+| 7.2 | Conclusions and next steps: answer the main research question and SQ1–SQ3, limitations, future modelling plan | All | ✅ Done |
+| 7.3 | Figures and tables with captions | All | ✅ Done |
+| 7.4 | References (datasets and papers) | Ahmed Hamouda | ✅ Done |
+| 7.5 | Reproducibility instructions (README, report Appendix A) | Cyrine Chabbar | ✅ Done |

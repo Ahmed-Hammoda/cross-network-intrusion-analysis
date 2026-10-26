@@ -23,3 +23,9 @@ venv/
 Thumbs.db
 .vscode/
 .idea/
+
+# LaTeX build files (the .tex and .pdf are kept)
+*.aux
+*.log
+*.out
+*.toc

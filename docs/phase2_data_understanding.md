@@ -345,5 +345,5 @@ per different behaviour; merged 17,551,848 rows standing for 63,012,224 flows.
 
 ## Feature dictionaries
 
-- NetFlow v3 — 53 features (Ahmed Hamouda): to do (task 2.8); until then the column groups are in the NetFlow section above
+- NetFlow v3 — 53 features (Ahmed Hamouda): [`netflow_feature_dictionary.md`](netflow_feature_dictionary.md)
 - CICIoT2023 — 39 features + `Label` in the release we use (Yassine Mtibaa): `ciciot_feature_dictionary.md`

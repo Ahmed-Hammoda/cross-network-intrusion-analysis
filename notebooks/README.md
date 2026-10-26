@@ -1,96 +1,54 @@
 # Notebooks
 
-Each member adds their own notebooks here. **Only edit your own notebooks** — that is what keeps
-us free of git conflicts.
-
-Every notebook starts with:
+Each member works only in their own notebooks, which keeps the team free of git conflicts. Every notebook starts with:
 
 ```python
 import sys; sys.path.append("..")
 from src.config import *
 ```
 
-and uses only the shared functions from `src/config.py` for cleaning, label mapping, sampling and
-quality reports, so all five datasets are processed in exactly the same way.
+and uses the shared functions of `src/config.py` (`clean`, `map_labels`, `validate`, `behaviour_hash`,
+`collapse_behaviours`, `cleaning_report`, …), so every dataset is processed the same way.
 
-## Expected notebooks
+## The notebooks
 
-| Notebook | Owner | Phases |
-|---|---|---|
-| `01_unsw.ipynb` | Ahmed Hamouda | 2, 3 |
-| `02_cic18.ipynb` | Ahmed Hamouda | 2, 3 |
-| `03_ton.ipynb` | Cyrine Chabbar | 2, 3 |
-| `04_bot.ipynb` | Cyrine Chabbar | 2, 3 |
-| `05_ciciot2023.ipynb` | Yassine Mtibaa | 2, 3 |
-| `06_merge_netflow.ipynb` | Ahmed Hamouda | 3 |
-| `07_eda.ipynb` | All (own sections) | 4 |
-| `08_feature_engineering.ipynb` | All (own sections) | 5 |
+| Notebook | Owner | Phase | Content |
+|---|---|---|---|
+| `01_unsw.ipynb` | Ahmed Hamouda | 2 | UNSW-NB15: data understanding (checks 0–8) |
+| `02_cic18.ipynb` | Ahmed Hamouda | 2 | CSE-CIC-IDS2018: data understanding |
+| `03_ton.ipynb` | Cyrine Chabbar (completed by Ahmed Hamouda) | 2 | ToN-IoT: data understanding |
+| `04_bot.ipynb` | Cyrine Chabbar (completed by Ahmed Hamouda) | 2 | BoT-IoT: data understanding |
+| `01_unsw_cleaning.ipynb` | Ahmed Hamouda | 3 | UNSW cleaning → `data/processed/UNSW_clean.parquet` |
+| `02_cic18_cleaning.ipynb` | Ahmed Hamouda | 3 | CIC18 cleaning → `CIC18_clean.parquet` |
+| `03_ton_cleaning.ipynb` | Ahmed Hamouda | 3 | ToN cleaning → `ToN_clean.parquet` |
+| `04_bot_cleaning.ipynb` | Ahmed Hamouda | 3 | BoT cleaning → `BoT_clean.parquet` |
+| `05_ciciot2023.ipynb` | Yassine Mtibaa | 2, 3 | CICIoT2023: data understanding and cleaning → `IoT23_clean.parquet` |
+| `06_merge_netflow.ipynb` | Ahmed Hamouda | 3 | stack the 4 NetFlow files, after-merge decisions → `netflow_merged.parquet` |
+| `07_eda_netflow.ipynb` | Ahmed Hamouda | 4 | EDA of the merged NetFlow data: statistics, plots, correlation, Mann–Whitney U, Kolmogorov–Smirnov |
+| `07_eda_iot23.ipynb` | Yassine Mtibaa | 4 | EDA of CICIoT2023: statistics, correlation, normality, chi-square, comparison with NetFlow |
+| `08_features_netflow.ipynb` | Ahmed Hamouda | 5 | feature engineering of the merged NetFlow data → `netflow_features.parquet` (59 features) |
+| `08_features_iot23.ipynb` | Yassine Mtibaa | 5 | feature engineering of CICIoT2023 |
 
----
+## Run order (to rebuild the data)
 
-## What each dataset notebook must contain (01 to 05)
+The data files are not in the repository (too large). With the raw CSV files in `data/raw/` (see the main README):
 
-Same structure for every dataset, so the results line up in the report. It follows the course lab
-(Part 1 for phase 2, Part 2 for phase 3), adapted to network traffic.
+1. **NetFlow:** `01_unsw_cleaning` → `02_cic18_cleaning` → `03_ton_cleaning` → `04_bot_cleaning` (any order) →
+   `06_merge_netflow` → `07_eda_netflow` → `08_features_netflow`.
+2. **CICIoT2023:** `05_ciciot2023` → `07_eda_iot23` → `08_features_iot23`.
 
-**Phase 2 — Data understanding (diagnosis only, nothing changed yet)**
-1. **Initial inspection** — `df.shape`, `df.info()`, `df.head()`; rows/columns vs the official numbers
-   in `docs/datasets.md`; table of columns with type and unit; first visible issues.
-2. **Missing values** — `missing_report(df)` (missing and infinite, count and %), a bar plot, and a
-   planned strategy per affected column.
-3. **Data type issues** — numbers stored as text, timestamps stored as integers, codes (protocol,
-   ports, TCP flags) stored as numbers, inconsistent label spellings; a fix for each.
-4. **Outlier detection** — IQR and z-score counts per numeric column, box plots by attack family
-   (log scale), legitimate vs error, planned treatment.
-5. **Consistency** — duplicates (overall and per class), identifier uniqueness, formatting of column
-   names and labels, `validate(df)` for logical checks.
-6. **Class distribution** — flows per attack label (table + plot in `figures/`).
-7. **Summary table** — every problem found → planned solution (markdown, no code).
+The phase 2 notebooks (`01_unsw` … `04_bot`) only read the raw files; they are not needed to rebuild the data.
+The large files (17–27 million rows) need about 16 GB of RAM; the notebooks load only the columns they use.
 
-**Phase 3 — Preprocessing (apply the plan, with before/after evidence)**
-8. `clean(df, SOURCE, impute={...})` — drops ID columns, handles inf/NaN (per-column imputation if
-   planned), removes duplicates. Show before/after counts.
-9. Type conversions (timestamps → datetime, codes → category) and verify them.
-10. `map_labels(df, label_col, SOURCE)` — standardises labels into `attack_label`, `attack_family`,
-    `is_attack`, `source_dataset`.
-11. Outlier treatment — remove impossible values found by `validate`, keep legitimate extremes;
-    document what was removed vs kept and why.
-12. `validate(df)` again — every check must show 0 violations.
-13. `sample_per_label(df)` — cap 200k flows per label, every rarer label kept in full.
-14. `quality_report(...)` and `save_clean(df, SOURCE)` — writes `tables/{SOURCE}_quality.csv`,
-    `tables/{SOURCE}_labels.csv` and `data/processed/{SOURCE}_clean.parquet`.
+## Rules followed in every notebook
 
-Any decision not covered by `config.py` goes into `docs/decision_log.md` **before** you apply it.
-
-## Expected from each member
-
-### Ahmed Hamouda — `01_unsw`, `02_cic18`, `06_merge_netflow`
-- UNSW-NB15 and CIC-2018 through phases 2 and 3 as above.
-- CIC-2018 has ~20 million rows: read it in chunks if memory is tight.
-- `06_merge_netflow`: load the 4 NetFlow Parquet files, confirm identical columns and data types,
-  concatenate, then check: no NaN / inf / duplicates, every label maps to exactly one family,
-  sampling caps respected. Compare one shared class (e.g. DoS) across sources. Save
-  `data/processed/netflow_merged.parquet`.
-- In `07_eda`: correlation heatmap, Mann–Whitney U test, Kolmogorov–Smirnov test.
-- In `08_feature_engineering`: train/test split and feature selection.
-
-### Cyrine Chabbar — `03_ton`, `04_bot`
-- ToN-IoT and BoT-IoT through phases 2 and 3 as above.
-- ToN-IoT is the largest file (~27.5 million rows): read it in chunks if needed.
-- BoT-IoT is 99.7% attacks: document that it is not used to describe benign traffic.
-- Dataset comparison table and class-distribution plots for the 4 NetFlow sources, built from the
-  `tables/*_quality.csv` and `tables/*_labels.csv` files.
-- In `07_eda`: descriptive statistics, plots, relationships between variables, Kruskal–Wallis + Dunn test.
-- In `08_feature_engineering`: new features and encoding.
-
-### Yassine Mtibaa — `05_ciciot2023`
-- CICIoT2023 through phases 2 and 3 as above.
-- The data is split across many CSV files: load them one by one.
-- First check the exact label spellings; add any label missing from `TAXONOMY` in `config.py`
-  (after telling the team) — `map_labels` stops with an error until every label is mapped.
-- Write why CICIoT2023 is not merged with the NetFlow data (different features, measured differently).
-- In `07_eda`: normality check, chi-square test, CICIoT2023 comparison at family level.
-- In `08_feature_engineering`: transformations and scaling (fitted on the training set only).
+- **Phase 2 is diagnosis only;** the data are changed in phase 3, after the team approved each decision
+  (`docs/decision_log.md`, `report/data_problems/phase2_data_problems.pdf`).
+- **NetFlow:** one row per different behaviour with a `count` column (identical flows merged), no sampling cap.
+  **CICIoT2023:** at most 200,000 rows per label (`sample_per_label`).
+- **No modelling in the project:** phase 5 has no train/test split; the steps that learn from the data must be refitted
+  on a training part before any model.
+- Every result is followed by a short **"Interpretation."** cell.
 
 ## Before you commit
 

@@ -20,8 +20,8 @@ Update the status in your own rows when you finish a task, and commit with a mes
 | 1 | Business understanding | Sat | Report 4 | ✅ Done |
 | 2 | Data understanding | Sat | Code 5 + Report 4 | ✅ Done |
 | 3 | Data preprocessing | Sun | Code 12 + Report 5 | ✅ Done |
-| 4 | Exploratory data analysis | Mon | Code 13 + Report 6 | ⬜ To do |
-| 5 | Feature engineering | Tue | Code 7 + Report 3 | 🔄 NetFlow done; IoT23 in progress |
+| 4 | Exploratory data analysis | Mon | Code 13 + Report 6 | 🔄 Done; IoT23 §7 (comparison with NetFlow) to re-run |
+| 5 | Feature engineering | Tue | Code 7 + Report 3 | 🔄 NetFlow done; IoT23 notebook to run |
 | 6 | Presentation | Wed | 35 | ⬜ To do |
 | 7 | Report | Wed | 25 | ⬜ To do |
 
@@ -70,8 +70,8 @@ Every NetFlow problem and its approved decision: [`report/data_problems/phase2_d
 
 | # | Shared task | Owner | Status |
 |---|---|---|---|
-| 2.8 | NetFlow v3 feature dictionary (53 features: name, meaning, unit, type) | Ahmed Hamouda | ⬜ To do |
-| 2.9 | Cross-dataset comparison table and class-distribution plots | Cyrine Chabbar | 🔄 Table done ([`phase2_data_understanding.md`](phase2_data_understanding.md)); plots to do |
+| 2.8 | NetFlow v3 feature dictionary (53 features: name, meaning, unit, type) | Ahmed Hamouda | ✅ Done ([`netflow_feature_dictionary.md`](netflow_feature_dictionary.md)) |
+| 2.9 | Cross-dataset comparison table and class-distribution plots | Cyrine Chabbar, Ahmed Hamouda | ✅ Done (table in [`phase2_data_understanding.md`](phase2_data_understanding.md); plot `figures/NetFlow_eda_families.png`) |
 | 2.10 | CICIoT2023 feature dictionary (39 features + label, see [ciciot_feature_dictionary.md](ciciot_feature_dictionary.md)) | Yassine Mtibaa | ✅ Done |
 
 ## Phase 3 — Data preprocessing: cleaning (Sun)
@@ -91,7 +91,7 @@ Apply the solutions planned in phase 2, with before/after evidence for every ste
 
 NetFlow notebooks: `01_unsw_cleaning`, `02_cic18_cleaning`, `03_ton_cleaning`, `04_bot_cleaning`. For NetFlow, 3.7 follows
 the approved plan (section 6 of the data-problems report) instead of the 200k cap: one row per different behaviour
-with a `count` column, no upper limit; imbalance is handled with class and network weights after the split.
+with a `count` column, no upper limit; imbalance is left to class and network weights at modelling time.
 
 | # | Shared task | Owner | Status |
 |---|---|---|---|
@@ -102,64 +102,45 @@ with a `count` column, no upper limit; imbalance is handled with class and netwo
 
 ## Phase 4 — Exploratory data analysis (Mon)
 
-| # | Task | Owner | Status |
-|---|---|---|---|
-| 4.1 | Distributions of key variables (log scale) and descriptive statistics per family and per source | Cyrine Chabbar | ⬜ To do |
-| 4.2 | Correlation analysis / heatmap of numeric features | Ahmed Hamouda | ⬜ To do |
-| 4.3 | Relationships between features and the target (`is_attack`, `attack_family`) | Cyrine Chabbar | ⬜ To do |
-| 4.4 | Interesting patterns and trends (per family, per network) | Yassine Mtibaa | ✅ Done (IoT23: flag fingerprints, DoS vs DDoS, separability — `07_eda_iot23`) |
-| 4.5 | Justified hypothesis tests with interpretation: | | |
-| | · Normality check (justifies non-parametric tests) | Yassine Mtibaa | ✅ Done (rejected everywhere → non-parametric) |
-| | · Mann–Whitney U: benign vs attack, with effect size (SQ1) | Ahmed Hamouda | ⬜ To do |
-| | · Kruskal–Wallis + Dunn post-hoc: across families (SQ1) | Cyrine Chabbar | ⬜ To do |
-| | · Chi-square: protocol × family (SQ1) | Yassine Mtibaa | ✅ Done (IoT23: V = 0.43) |
-| | · Kolmogorov–Smirnov: same attack across networks (SQ2) | Ahmed Hamouda | ⬜ To do |
-| 4.6 | Class imbalance analysis (SQ3) | Cyrine Chabbar | ⬜ To do |
-| 4.7 | CICIoT2023 EDA, compared to NetFlow at family level | Yassine Mtibaa | 🔄 IoT23 EDA done; NetFlow comparison runs once the cleaned NetFlow files exist |
+Each data source has one EDA notebook (follows lab 4): `07_eda_netflow` (merged NetFlow, summary in
+[`phase4_eda_netflow.md`](phase4_eda_netflow.md), report `report/eda/phase4_eda_report.pdf`) and `07_eda_iot23`
+(CICIoT2023).
 
-**Merged NetFlow data** (Ahmed Hamouda does the whole EDA of the merged NetFlow table): notebook `07_eda_netflow`,
-summary in [`phase4_eda_netflow.md`](phase4_eda_netflow.md).
-
-| # | Task (merged NetFlow) | Owner | Status |
+| # | Task | Merged NetFlow (Ahmed Hamouda) | CICIoT2023 (Yassine Mtibaa) |
 |---|---|---|---|
-| 4.1 | Descriptive statistics and plots: summary of the key variables, median per family, histograms, box plots | Ahmed Hamouda | ✅ Done |
-| 4.2 | Correlation analysis: Pearson and Spearman heatmaps | Ahmed Hamouda | ✅ Done |
-| 4.3 | Relationships: Benign vs attack in each network, port range × family | Ahmed Hamouda | ✅ Done |
-| 4.5 | Normality check + tests: Mann–Whitney U (SQ1), Kolmogorov–Smirnov (SQ2) | Ahmed Hamouda | ✅ Done |
-| 4.6 | Class imbalance: behaviours and flows per family and network (§1) | Ahmed Hamouda | ✅ Done |
+| 4.1 | Descriptive statistics and distributions (log scale), per family and per network | ✅ | ✅ |
+| 4.2 | Correlation analysis: Pearson and Spearman heatmaps | ✅ | ✅ |
+| 4.3 | Relationships between features and the target (`is_attack`, `attack_family`) | ✅ | ✅ |
+| 4.4 | Patterns: Benign vs attack per network, port range × family / flag fingerprints, DoS vs DDoS | ✅ | ✅ |
+| 4.5 | Normality check (→ non-parametric tests) | ✅ | ✅ |
+| 4.5 | Hypothesis tests | ✅ Mann–Whitney U (SQ1), Kolmogorov–Smirnov (SQ2) | ✅ chi-square protocol × family (SQ1), KS DoS vs DDoS |
+| 4.6 | Class imbalance (SQ3) | ✅ behaviours and flows per family and network | ✅ |
+| 4.7 | CICIoT2023 compared to NetFlow at family level (SQ2) | ✅ NetFlow values provided: `tables/NetFlow_family_concepts.csv` | 🔄 re-run §7 of `07_eda_iot23` with that table |
+
+**Removed from the plan:** Kruskal–Wallis + Dunn across families. The requirement asks for at least one justified test;
+the team covers SQ1 and SQ2 with Mann–Whitney U, chi-square and Kolmogorov–Smirnov, so a fourth test adds nothing.
 
 ## Phase 5 — Feature engineering (Tue)
 
-Follows lab Parts 3–5. **First step: train/test split** — every encoder, scaler and selector is
-fitted on the training set only (no data leakage).
+Requirement: explain feature selection, extraction / creation, encoding and scaling / transformation; justify the final
+feature set. **There is no modelling in the project, so no train/test split:** the steps that learn from the data are
+fitted on all the data and must be refitted on a training part before any model. Notebooks: `08_features_netflow`
+(summary in [`phase5_features_netflow.md`](phase5_features_netflow.md), report
+`report/features/phase5_features_report.pdf`) and `08_features_iot23`. Both use the same sections and rules
+(|ρ| ≥ 0.95, standard deviation when IQR = 0).
 
-| # | Task | Owner | Status |
+| # | Task | Merged NetFlow (Ahmed Hamouda) | CICIoT2023 (Yassine Mtibaa) |
 |---|---|---|---|
-| 5.1 | Train/test split (stratified by `attack_label`) | Ahmed Hamouda | ⬜ To do |
-| 5.2 | Time features: duration from timestamps, packets/s, bytes/s (no hour-of-day — it would leak the lab's attack schedule) | Yassine Mtibaa | ⬜ To do |
-| 5.3 | Categorical features: one-hot protocol, frequency/target encoding for L7 protocol and ports, rare categories grouped | Cyrine Chabbar | ⬜ To do |
-| 5.4 | Numeric features: ratios (in/out bytes, bytes per packet), binning, polynomial terms where justified | Cyrine Chabbar | ⬜ To do |
-| 5.5 | Domain-specific features: traffic asymmetry, TCP-flag shares, burstiness from inter-arrival times | Ahmed Hamouda | ⬜ To do |
-| 5.6 | Scaling / transformation: log transform skewed features, RobustScaler fitted on train | Yassine Mtibaa | ⬜ To do |
-| 5.7 | Feature validation: before/after plots, new features vs target | Yassine Mtibaa | ⬜ To do |
-| 5.8 | Feature selection: remove low-variance and highly correlated features, importance ranking, justify | Ahmed Hamouda | ⬜ To do |
-| 5.9 | Export final dataset + data dictionary of all features + usage instructions | Cyrine Chabbar | ⬜ To do |
-| 5.10 | Bonus: PCA (2D view of class separability) | Ahmed Hamouda | ⬜ To do |
+| 5.2–5.5 | Creation: time / rate, ratio and domain features | ✅ 9 created features | 🔄 written, not run yet |
+| 5.3 | Encoding of the code columns | ✅ port range, protocol, TCP flag bits, L7 protocol | 🔄 written, not run yet |
+| 5.6 | Transformation and scaling | ✅ log(1 + x), robust scaling | 🔄 written, not run yet |
+| 5.7 | Validation: before / after, new features vs target | ✅ | 🔄 written, not run yet |
+| 5.8 | Selection: fingerprints, near-constant, correlated pairs, mutual information | ✅ 72 → 59 features | 🔄 written, not run yet |
+| 5.9 | Final feature set: justification, data dictionary, export | ✅ `tables/NetFlow_fe_dictionary.csv` | 🔄 written, not run yet |
+| 5.10 | PCA (2-D view of the families) | ✅ | 🔄 written, not run yet |
 
-**Merged NetFlow data** (Ahmed Hamouda does the whole feature engineering of the merged NetFlow table): notebook
-`08_features_netflow`, report `report/features/phase5_features_report.pdf`, summary in
-[`phase5_features_netflow.md`](phase5_features_netflow.md). The phase 5 requirement asks for selection, creation,
-encoding, scaling / transformation and a justified final feature set; there is no modelling in the project, so no
-train/test split (the learned steps are fitted on all the data, to be refitted on a training part before any model).
-
-| # | Task (merged NetFlow) | Owner | Status |
-|---|---|---|---|
-| 5.2–5.5 | Creation (ratios, rates, 4 behaviour flags) and encoding (port range, protocol, TCP flag bits, L7 protocol) | Ahmed Hamouda | ✅ Done |
-| 5.6 | Transformation (log 1 + x) and robust scaling (std when IQR = 0) | Ahmed Hamouda | ✅ Done |
-| 5.7 | Validation: skewness before / after, created features per family, mutual information | Ahmed Hamouda | ✅ Done |
-| 5.8 | Selection: copies, fingerprints, near-constant, \|ρ\| ≥ 0.95, mutual information → 59 features | Ahmed Hamouda | ✅ Done |
-| 5.9 | Export: `netflow_features.parquet` (on the PC, too large for GitHub) + `tables/NetFlow_fe_dictionary.csv` | Ahmed Hamouda | ✅ Done |
-| 5.10 | PCA (2-D view of the families) | Ahmed Hamouda | ✅ Done |
+**Removed from the plan:** 5.1 train/test split and model-based importance (random forest): the project stops before
+modelling, and mutual information ranks the features without a model.
 
 ## Phase 6 — Presentation (Wed)
 

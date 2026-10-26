@@ -347,11 +347,7 @@ Documentation errors & BoT-IoT row count; release differs from paper (CICIoT2023
 \end{tabular}
 \end{table}
 
-\fig[0.8\linewidth]{IoT23_missing_values.png}{CICIoT2023: missing values per column, caused by 7 truncated lines in
-the raw files.}
 
-\textbf{Limitations of the data.} All five datasets were recorded in testbeds with scripted attacks, so they reflect how
-each lab was built as well as how attacks behave. Phase 3 and the analysis account for this.
 
 % =========================================================
 % 3 DATA PREPROCESSING
@@ -452,17 +448,11 @@ M11 & flag behaviours that have a different family in another dataset & 38,453 r
 
 \subsection{Cleaning CICIoT2023, and why it stays separate}
 \begin{itemize}
-  \item \textbf{Treatments.}
-        \begin{itemize}
-          \item The 7 truncated lines and the 991 windows with an infinite \var{Rate} (0-second windows) were removed.
-                No imputation was done: a window with no duration has no meaningful rate.
-          \item The 2 negative \var{IAT} values were removed.
-          \item Exact duplicates were removed per file and again after combining the 63 files.
-          \item Column names were standardised, and labels mapped to the taxonomy.
-          \item At most 200,000 rows were kept per label (\var{sample_per_label}), every row of rarer labels kept.
-          \item Windows whose features also appear under another label (mostly DoS vs DDoS) were \textbf{kept and
-                flagged} (\var{conflicting_features}), so the finding stays visible in the EDA.
-        \end{itemize}
+  \item \textbf{Treatments.} Impossible values were removed: 7 truncated lines, 991 windows with an infinite
+        \var{Rate} (0-second windows, which have no meaningful rate, so nothing was imputed) and 2 negative \var{IAT}
+        values. Exact duplicates were removed per file and again after combining the 63 files, and labels were mapped
+        to the taxonomy. At most 200,000 rows were kept per label. Windows whose features also appear under another
+        label (mostly DoS vs DDoS) were \textbf{kept and flagged} (\var{conflicting_features}) for the EDA.
   \item \textbf{Result:} 45,019,243 $\rightarrow$ 20,701,050 clean windows (24.3 M duplicates removed)
         $\rightarrow$ 4,420,714 sampled rows; 0 missing, 0 infinite.
   \item \textbf{Why not merged with NetFlow.} A CICIoT2023 row is a window of up to 100 packets that can mix several
@@ -474,15 +464,10 @@ M11 & flag behaviours that have a different family in another dataset & 38,453 r
 \fig[0.72\linewidth]{IoT23_rows_per_family_phase3.png}{CICIoT2023: rows per family after cleaning and sampling.}
 
 \subsection{Preventing data leakage}
-\begin{itemize}
-  \item \textbf{Columns that reveal the answer are never features:} IP addresses (they identify the attacker
-        machine), timestamps (they reveal the lab's attack schedule), TTL and TCP window (set by each lab machine's
-        operating system), random identifiers, and \var{source_dataset} and \var{count}.
-  \item \textbf{Mislabelled flows are removed rather than relabelled,} so that no label is invented.
-  \item \textbf{No transformation is fitted per dataset before the analysis.} The project stops before modelling, so
-        there is no train/test split. Every learned step (scaling, selection) must be refitted on the training part
-        only in a modelling phase.
-\end{itemize}
+Columns that reveal the answer are \textbf{never features}: IP addresses (they identify the attacker machine),
+timestamps (they reveal the lab's attack schedule), TTL and TCP window (set by each lab machine's operating system),
+random identifiers, \var{source_dataset} and \var{count}. Mislabelled flows are removed rather than relabelled, so no
+label is invented.
 
 % =========================================================
 % 4 EXPLORATORY DATA ANALYSIS
@@ -779,15 +764,6 @@ datasets. Tools, victims, network set-up and the measuring unit change the traff
 it alike.
 \end{interp}
 
-\subsection{Summary of the analysis}
-\begin{enumerate}
-  \item The data are far from normal, so medians, log scales, Spearman correlation and non-parametric tests are used.
-  \item Families have distinct profiles (packet size, rate, ports, flags): recognising the family looks feasible (SQ1).
-  \item Benign vs attack differences are real but network-specific, even reversed between networks (SQ1).
-  \item The same family behaves differently across networks and datasets (SQ2), so a drop in performance on an unseen
-        network is expected (SQ3).
-\end{enumerate}
-
 % =========================================================
 % 5 FEATURE ENGINEERING
 % =========================================================
@@ -857,8 +833,6 @@ SYN + ACK + PSH + FIN.
         grouped as ``other''. The application protocols are already numeric shares.
 \end{itemize}
 
-\textbf{Alternatives considered:} using the raw port number (meaningless distances); target encoding (it uses the
-label, so there's a risk of leakage). Binning was used only where the number itself has no meaning (the port).
 
 \subsection{Transformation and scaling}
 \begin{itemize}
@@ -974,6 +948,8 @@ middle range, so this map depends on the scaling choice.
 \begin{itemize}
   \item \textbf{hour-of-day features:} they leak the lab's attack schedule;
   \item \textbf{polynomial terms:} the relationships are monotonic, and the terms would add about 1,800 columns;
+  \item \textbf{raw port number as a feature:} distances between port numbers mean nothing, so ports are grouped
+        into ranges instead;
   \item \textbf{binning of volumes:} the log transform keeps more detail;
   \item \textbf{target encoding:} risk of leakage;
   \item \textbf{model-based importance:} there is no modelling in the project.
@@ -1009,13 +985,9 @@ Reliability on unseen networks cannot be assumed; it must be measured. \\
 \end{tabular}
 \end{table}
 
-\textbf{Success criteria.}
-\begin{itemize}
-  \item Every sub-question is answered with tests, effect sizes and figures (criterion 1).
-  \item Each family's indicators are identified (criterion 2).
-  \item The final feature sets are model-ready and leakage-free (criterion 3).
-  \item Every decision is logged and the work can be rebuilt from the repository (criterion 4, Appendix A).
-\end{itemize}
+\textbf{Success criteria.} All four are met: every sub-question is answered with tests, effect sizes and figures;
+each family's indicators are identified; the final feature sets are model-ready and leakage-free; and every decision
+is logged and can be rebuilt from the repository (Appendix A).
 
 \subsection{Limitations}
 \begin{itemize}

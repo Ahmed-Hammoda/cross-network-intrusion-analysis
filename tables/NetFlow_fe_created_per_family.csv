@@ -1,0 +1,11 @@
+attack_family,in_bytes_per_pkt,out_bytes_per_pkt,out_in_ratio,bytes_per_sec,pkts_per_sec,no_answer %,one_packet %,syn_only %,hit_timeout %
+Benign,91.31,163.0,1.27,1678.6,9.68,8.4,20.0,5.0,1.2
+Credential attacks,80.17,183.8,4.11,4956.93,25.42,1.8,3.9,1.9,0.0
+Data theft,112.88,201.88,2.03,2406.16,13.17,0.2,1.1,0.9,0.9
+Denial of service,98.83,229.4,1.51,427.95,2.38,24.0,1.7,19.8,0.6
+Exploitation and intrusion,78.0,91.0,1.28,2385.31,25.0,5.6,11.6,4.2,0.7
+Fuzzing and crypto,78.0,42.67,0.49,1928.65,26.5,8.6,3.7,2.4,0.0
+Interception and spoofing,70.0,234.0,1.81,11705.88,100.0,1.1,18.7,0.0,0.0
+Malware and botnets,48.0,40.0,0.83,346.68,7.87,1.0,1.0,68.2,0.0
+Reconnaissance,44.0,40.0,0.91,4000.0,90.91,7.6,92.1,91.5,0.0
+Web and injection,140.4,296.71,0.82,8770.36,35.71,0.2,0.3,0.1,0.0

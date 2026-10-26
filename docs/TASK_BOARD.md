@@ -21,7 +21,7 @@ Update the status in your own rows when you finish a task, and commit with a mes
 | 2 | Data understanding | Sat | Code 5 + Report 4 | ✅ Done |
 | 3 | Data preprocessing | Sun | Code 12 + Report 5 | ✅ Done |
 | 4 | Exploratory data analysis | Mon | Code 13 + Report 6 | ⬜ To do |
-| 5 | Feature engineering | Tue | Code 7 + Report 3 | ⬜ To do |
+| 5 | Feature engineering | Tue | Code 7 + Report 3 | 🔄 NetFlow done; IoT23 in progress |
 | 6 | Presentation | Wed | 35 | ⬜ To do |
 | 7 | Report | Wed | 25 | ⬜ To do |
 
@@ -145,6 +145,21 @@ fitted on the training set only (no data leakage).
 | 5.8 | Feature selection: remove low-variance and highly correlated features, importance ranking, justify | Ahmed Hamouda | ⬜ To do |
 | 5.9 | Export final dataset + data dictionary of all features + usage instructions | Cyrine Chabbar | ⬜ To do |
 | 5.10 | Bonus: PCA (2D view of class separability) | Ahmed Hamouda | ⬜ To do |
+
+**Merged NetFlow data** (Ahmed Hamouda does the whole feature engineering of the merged NetFlow table): notebook
+`08_features_netflow`, report `report/features/phase5_features_report.pdf`, summary in
+[`phase5_features_netflow.md`](phase5_features_netflow.md). The phase 5 requirement asks for selection, creation,
+encoding, scaling / transformation and a justified final feature set; there is no modelling in the project, so no
+train/test split (the learned steps are fitted on all the data, to be refitted on a training part before any model).
+
+| # | Task (merged NetFlow) | Owner | Status |
+|---|---|---|---|
+| 5.2–5.5 | Creation (ratios, rates, 4 behaviour flags) and encoding (port range, protocol, TCP flag bits, L7 protocol) | Ahmed Hamouda | ✅ Done |
+| 5.6 | Transformation (log 1 + x) and robust scaling (std when IQR = 0) | Ahmed Hamouda | ✅ Done |
+| 5.7 | Validation: skewness before / after, created features per family, mutual information | Ahmed Hamouda | ✅ Done |
+| 5.8 | Selection: copies, fingerprints, near-constant, \|ρ\| ≥ 0.95, mutual information → 59 features | Ahmed Hamouda | ✅ Done |
+| 5.9 | Export: `netflow_features.parquet` (on the PC, too large for GitHub) + `tables/NetFlow_fe_dictionary.csv` | Ahmed Hamouda | ✅ Done |
+| 5.10 | PCA (2-D view of the families) | Ahmed Hamouda | ✅ Done |
 
 ## Phase 6 — Presentation (Wed)
 

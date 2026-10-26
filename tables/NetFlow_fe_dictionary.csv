@@ -1,0 +1,60 @@
+feature,meaning,origin,transformation,mutual information
+IN_BYTES,bytes sent by the client,original,"log(1+x), robust scaling",1.231
+OUT_BYTES,bytes sent back by the server,original,"log(1+x), robust scaling",1.216
+in_bytes_per_pkt,average size of the packets sent,created,"log(1+x), robust scaling",1.169
+out_in_ratio,bytes received per byte sent,created,"log(1+x), robust scaling",1.165
+out_bytes_per_pkt,average size of the packets received,created,"log(1+x), robust scaling",1.11
+LONGEST_FLOW_PKT,largest packet of the flow,original,"log(1+x), robust scaling",1.1
+DST_TO_SRC_AVG_THROUGHPUT,average throughput server to client,original,"log(1+x), robust scaling",0.82
+SRC_TO_DST_AVG_THROUGHPUT,average throughput client to server,original,"log(1+x), robust scaling",0.778
+pkts_per_sec,packets per second (both directions),created,"log(1+x), robust scaling",0.733
+NUM_PKTS_UP_TO_128_BYTES,packets of at most 128 bytes,original,"log(1+x), robust scaling",0.679
+SRC_TO_DST_IAT_MAX,largest gap between client packets,original,"log(1+x), robust scaling",0.622
+IN_PKTS,packets sent by the client,original,"log(1+x), robust scaling",0.602
+DURATION_IN,duration of the client-to-server stream,original,"log(1+x), robust scaling",0.579
+FLOW_DURATION_MILLISECONDS,duration of the flow,original,"log(1+x), robust scaling",0.57
+DST_TO_SRC_IAT_MAX,largest gap between server packets,original,"log(1+x), robust scaling",0.547
+OUT_PKTS,packets sent back by the server,original,"log(1+x), robust scaling",0.544
+SRC_TO_DST_IAT_STDDEV,spread of the gaps between client packets,original,"log(1+x), robust scaling",0.505
+DURATION_OUT,duration of the server-to-client stream,original,"log(1+x), robust scaling",0.492
+DST_TO_SRC_IAT_STDDEV,spread of the gaps between server packets,original,"log(1+x), robust scaling",0.462
+RETRANSMITTED_IN_BYTES,bytes retransmitted by the client,original,"log(1+x), robust scaling",0.42
+SHORTEST_FLOW_PKT,smallest packet of the flow,original,"log(1+x), robust scaling",0.409
+NUM_PKTS_128_TO_256_BYTES,packets of 128-256 bytes,original,"log(1+x), robust scaling",0.288
+NUM_PKTS_1024_TO_1514_BYTES,packets of 1024-1514 bytes,original,"log(1+x), robust scaling",0.254
+RETRANSMITTED_OUT_BYTES,bytes retransmitted by the server,original,"log(1+x), robust scaling",0.219
+SRC_TO_DST_IAT_MIN,smallest gap between client packets,original,"log(1+x), robust scaling",0.202
+server_psh,1 if the server set the PSH flag,encoded,none (0/1),0.193
+NUM_PKTS_256_TO_512_BYTES,packets of 256-512 bytes,original,"log(1+x), robust scaling",0.19
+NUM_PKTS_512_TO_1024_BYTES,packets of 512-1024 bytes,original,"log(1+x), robust scaling",0.186
+client_psh,1 if the client set the PSH flag,encoded,none (0/1),0.18
+port_well_known,1 if the destination port is 0-1023,encoded,none (0/1),0.164
+DNS_TTL_ANSWER,time-to-live of the DNS answer,original,"log(1+x), robust scaling",0.146
+one_packet,1 if the client sent a single packet,created,none (0/1),0.14
+l7_http,1 if the application protocol is http,encoded,none (0/1),0.139
+client_syn,1 if the client set the SYN flag,encoded,none (0/1),0.126
+server_fin,1 if the server set the FIN flag,encoded,none (0/1),0.125
+client_fin,1 if the client set the FIN flag,encoded,none (0/1),0.124
+syn_only,1 if TCP and the client sent only SYN (half-open scan),created,none (0/1),0.123
+port_registered,1 if the destination port is 1024-49151,encoded,none (0/1),0.12
+server_syn,1 if the server set the SYN flag,encoded,none (0/1),0.119
+l7_unknown,1 if the application protocol is unknown,encoded,none (0/1),0.118
+client_ack,1 if the client set the ACK flag,encoded,none (0/1),0.111
+server_rst,1 if the server set the RST flag,encoded,none (0/1),0.111
+DST_TO_SRC_IAT_MIN,smallest gap between server packets,original,"log(1+x), robust scaling",0.106
+proto_udp,1 if UDP,encoded,none (0/1),0.1
+l7_other,1 if the application protocol is one of the rare ones,encoded,none (0/1),0.091
+server_ack,1 if the server set the ACK flag,encoded,none (0/1),0.084
+client_cwr,1 if the client set the CWR flag,encoded,none (0/1),0.062
+port_dynamic,1 if the destination port is 49152 or more,encoded,none (0/1),0.039
+l7_tls,1 if the application protocol is tls,encoded,none (0/1),0.037
+no_answer,1 if the server sent nothing back,created,none (0/1),0.035
+l7_88,1 if the application protocol is nDPI code 88,encoded,none (0/1),0.034
+client_rst,1 if the client set the RST flag,encoded,none (0/1),0.033
+l7_36,1 if the application protocol is nDPI code 36,encoded,none (0/1),0.028
+l7_37,1 if the application protocol is nDPI code 37,encoded,none (0/1),0.026
+server_ece,1 if the server set the ECE flag,encoded,none (0/1),0.025
+l7_netbios,1 if the application protocol is netbios,encoded,none (0/1),0.02
+hit_timeout,1 if the flow lasted 120 s or more (cut by the exporter),created,none (0/1),0.014
+proto_other,"1 if another protocol (ICMP, ...)",encoded,none (0/1),0.004
+l7_41,1 if the application protocol is nDPI code 41,encoded,none (0/1),0.003

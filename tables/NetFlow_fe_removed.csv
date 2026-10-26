@@ -1,0 +1,14 @@
+feature,step,reason
+TCP_WIN_MAX_IN,2 fingerprint,TCP window size is set by the operating system of each lab machine (M10)
+TCP_WIN_MAX_OUT,2 fingerprint,TCP window size is set by the operating system of each lab machine (M10)
+client_urg,3 near-constant,one value in 99.96 % of behaviours
+server_urg,3 near-constant,one value in 100.00 % of behaviours
+server_cwr,3 near-constant,one value in 99.79 % of behaviours
+client_ece,4 correlated,"rho = 1.000 with client_cwr, lower mutual information (0.062 vs 0.062)"
+RETRANSMITTED_OUT_PKTS,4 correlated,"rho = 0.997 with RETRANSMITTED_OUT_BYTES, lower mutual information (0.118 vs 0.219)"
+RETRANSMITTED_IN_PKTS,4 correlated,"rho = 0.984 with RETRANSMITTED_IN_BYTES, lower mutual information (0.252 vs 0.420)"
+proto_tcp,4 correlated,"rho = -0.976 with proto_udp, lower mutual information (0.100 vs 0.100)"
+l7_dns,4 correlated,"rho = 0.971 with DNS_TTL_ANSWER, lower mutual information (0.119 vs 0.146)"
+DST_TO_SRC_IAT_AVG,4 correlated,"rho = 0.965 with DST_TO_SRC_IAT_MAX, lower mutual information (0.469 vs 0.547)"
+SRC_TO_DST_IAT_AVG,4 correlated,"rho = 0.958 with SRC_TO_DST_IAT_MAX, lower mutual information (0.540 vs 0.622)"
+bytes_per_sec,4 correlated,"rho = 0.950 with SRC_TO_DST_AVG_THROUGHPUT, lower mutual information (0.776 vs 0.778)"

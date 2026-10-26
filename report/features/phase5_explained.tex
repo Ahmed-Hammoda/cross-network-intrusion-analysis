@@ -1,0 +1,149 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=2cm]{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{amsmath}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\definecolor{navy}{HTML}{1B2A4A}
+\newcommand{\var}[1]{\texttt{\detokenize{#1}}}
+\newcommand{\keybox}[1]{\par\smallskip\noindent\fcolorbox{navy}{navy!4}{\parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule}{#1}}\par\smallskip}
+\setlist{itemsep=1pt,topsep=2pt}
+\setlength{\parskip}{4pt}\setlength{\parindent}{0pt}
+\widowpenalty=10000 \clubpenalty=10000
+
+\begin{document}
+{\LARGE\bfseries Phase 5 explained --- Feature engineering}\\[2pt]
+{\large Merged NetFlow data \quad·\quad notebook \texttt{08\_features\_netflow.ipynb}}
+
+\section*{1. What is feature engineering?}
+A model does not read network traffic; it reads a table of numbers, one column per \textbf{feature}. Feature engineering
+prepares that table so that (1) each column means something about the traffic, (2) the columns are in a form a model can
+use, and (3) useless or misleading columns are removed. The requirement asks for four techniques and one justification:
+
+\keybox{\textbf{Requirement:} explain feature \textbf{selection}, \textbf{extraction/creation}, \textbf{encoding}, and
+\textbf{scaling/transformation} when appropriate; \textbf{justify the final feature set}.}
+
+\textbf{No train/test split.} The project does not train a model, so the data are not split. In a real modelling phase,
+the steps that ``learn'' from the data (scaling, selection) would be fitted on the training part only, to avoid
+\emph{data leakage} (test information sneaking into training).
+
+\section*{2. The steps in one table}
+\begin{tabular}{L{3.0cm}L{6.3cm}L{6.3cm}}
+\toprule
+Step & What we did & Result \\
+\midrule
+0. Starting columns & Removed columns that reveal the answer: timestamps, IPs, TTL, random IDs & 31 numeric + 8 code columns \\
+1. Creation & Built 9 new columns from existing ones & ratios, rates, 4 yes/no behaviour flags \\
+2. Encoding & Turned code columns into yes/no columns & 32 new 0/1 columns \\
+3. Transformation & $\log(1+x)$ on skewed numbers & strongly skewed columns: 36 $\to$ 19 \\
+3. Scaling & $(x - \text{median}) / \text{IQR}$ & all numbers on a similar scale \\
+4. Selection & Removed fingerprints, near-constant and duplicate columns & 72 candidates $\to$ \textbf{59 features} \\
+5. Final set & Table of every feature + saved dataset & \texttt{netflow\_features.parquet} \\
+6. PCA & 2-D map of the families & families overlap: many features needed \\
+\bottomrule
+\end{tabular}
+
+\section*{3. Each step, simply}
+
+\textbf{Step 0 --- Starting columns.} Some columns would let a model ``cheat'': a timestamp tells \emph{when} the lab ran
+an attack, an IP tells \emph{which machine} attacked, and TTL identifies the lab's computers. None of them describes the
+traffic itself, so they are removed (phase 2 decisions M2--M5, M10).
+
+\textbf{Step 1 --- Creation (extraction).} New columns, computed row by row:
+\begin{itemize}
+  \item \textbf{Ratios:} bytes per packet (sent and received), and bytes received per byte sent. They describe the
+        \emph{shape} of a flow, not its size. In phase 4 the raw sizes pointed in opposite directions in different
+        networks.
+  \item \textbf{Rates:} packets per second, bytes per second. Floods are fast; slow attacks are slow.
+  \item \textbf{Behaviour flags (0/1):} \var{no_answer} (the server never replied), \var{one_packet}, \var{syn_only}
+        (a half-open scan), \var{hit_timeout} (the flow lasted 120\,s or more).
+\end{itemize}
+\emph{Example:} 92\% of Reconnaissance flows are one-packet, SYN-only probes. One column now says ``this is a scan''.
+
+\textbf{Step 2 --- Encoding.} Some columns are \textbf{codes, not quantities}: port 443 is not ``more'' than port 80.
+\begin{itemize}
+  \item \textbf{One-hot encoding:} one 0/1 column per category, e.g. \var{proto_tcp}, \var{proto_udp},
+        \var{proto_other}.
+  \item \textbf{Port:} 65,536 values, so they are grouped into 3 official ranges: well-known (0--1023), registered,
+        dynamic.
+  \item \textbf{TCP flags:} the value 27 is a bitmask meaning SYN + ACK + PSH + FIN, so it becomes one 0/1 column per
+        flag.
+  \item \textbf{Application protocol:} the 9 protocols above 1\% each get a column; the rare ones are grouped as ``other''.
+\end{itemize}
+
+\textbf{Step 3 --- Transformation and scaling.}
+\begin{itemize}
+  \item \textbf{Why transform?} The numbers are \emph{extremely skewed}: most flows are small, a few are gigantic
+        (skewness up to 319). \textbf{$\log(1+x)$} shrinks big values (each $\times 10$ becomes $+2.3$), keeps 0 at 0,
+        and keeps the order.
+  \item \textbf{Why scale?} After the log, columns still have different ranges. \textbf{Robust scaling} computes
+        $(x - \text{median}) / \text{IQR}$, where the IQR is the width of the middle 50\% of values.
+  \item \textbf{Why ``robust''?} We use the median and IQR, not the mean and standard deviation, because the extreme
+        values \emph{are} the attacks and must not set the scale.
+  \item \textbf{Special case:} if more than half of the values are equal (e.g. retransmissions are 0 for most flows),
+        the IQR is 0. Those 5 columns are divided by the standard deviation instead; otherwise they would dominate.
+\end{itemize}
+
+\textbf{Step 4 --- Selection.} Each removal has a reason:
+\begin{enumerate}
+  \item \textbf{Exact copies:} none were left after phase 3.
+  \item \textbf{Fingerprints:} the TCP window size, which is set by each lab machine's operating system. A model would
+        learn ``which lab'', not ``which attack''.
+  \item \textbf{Near-constant columns:} the same value in $\geq$ 99.5\% of rows carries no information (3 rare TCP
+        flags).
+  \item \textbf{Correlated pairs:} if two columns move together ($|\rho| \geq 0.95$, Spearman correlation), they say the
+        same thing, so one is removed (8 removed). Example: retransmitted packets vs retransmitted bytes.
+  \item \textbf{Mutual information (MI):} a score of how much a feature tells about the attack family (0 = nothing). It
+        decides which column of a pair to keep, and ranks the final features.
+\end{enumerate}
+
+\textbf{Step 5 --- Final feature set (the justification).} 59 features: 25 original, 8 created, 26 encoded. Why this set
+is good:
+\begin{itemize}
+  \item \textbf{every feature is justified} by phase 2 or phase 4;
+  \item \textbf{nothing identifies the lab, the machine or the moment;}
+  \item \textbf{no duplicates and no useless columns;}
+  \item \textbf{everything is ready for a model} (scaled and encoded).
+\end{itemize}
+\textbf{Proof that creation was worth it:} 3 of the 5 most informative features are created ones (bytes per packet sent
+and received, and the out/in ratio), and 8 of the 9 created features survived the selection.
+
+\textbf{Step 6 --- PCA.} \textbf{Principal component analysis} squeezes the 59 features into 2 new axes so we can draw
+the data on a map. Two axes keep 42.8\% of the information. Reconnaissance and Fuzzing form their own clusters, but most
+families overlap. So, as phase 4 already showed, \textbf{no single direction separates the attacks}: a model needs many
+features together.
+
+\textbf{Step 7 --- Techniques not used (``when appropriate'').} Each was considered and rejected for a reason:
+\begin{itemize}
+  \item \textbf{hour of day:} it leaks the lab's attack schedule;
+  \item \textbf{polynomial terms:} no curved relationships, and they would add about 1,800 columns;
+  \item \textbf{binning of sizes:} the log keeps more detail;
+  \item \textbf{target encoding:} it uses the label, so there's a risk of leakage;
+  \item \textbf{train/test split:} there is no model.
+\end{itemize}
+
+\section*{4. Six words to know}
+\begin{tabular}{L{3.4cm}L{12.6cm}}
+\toprule
+Feature & one input column of the model \\
+One-hot encoding & one 0/1 column per category of a code column \\
+Skewness & how lopsided a distribution is: 0 = symmetric, above 1 = strongly skewed \\
+IQR & Q3 $-$ Q1, the width of the middle half of the values; not affected by extremes \\
+Mutual information & how much knowing a feature reduces the uncertainty about the family (0 = no help) \\
+Data leakage & information from the test data used while preparing or training, which makes results look too good \\
+\bottomrule
+\end{tabular}
+
+\section*{5. The answer in three sentences}
+We built 9 behaviour features, encoded the code columns, log-transformed and robust-scaled the numbers, and removed
+fingerprints, constant and duplicate columns, ending with \textbf{59 justified features}. The created features are among
+the most informative, which confirms the phase 4 findings. The set contains only traffic behaviour, nothing that
+identifies the lab, so a future model has to learn the attack, not the network (SQ3).
+
+\end{document}

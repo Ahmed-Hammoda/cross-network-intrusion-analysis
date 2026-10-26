@@ -283,7 +283,108 @@ information. It does not make them useless (\var{syn_only} alone marks 92\% of t
 other, not with the numeric columns.
 \end{reading}
 
+\clearpage
 \section{Final feature set}
+
+\subsection{From 53 raw columns to 59 features}
+
+The four NetFlow v3 datasets share \textbf{53 traffic columns} (plus the two label columns). The table follows every
+column from the raw files to the final feature set.
+
+\begin{table}[H]\centering\small
+\caption{How the number of columns changes, stage by stage.}
+\begin{tabular}{L{4.3cm}rL{9.6cm}}
+\toprule
+Stage & Columns & What changes \\
+\midrule
+Raw NetFlow v3 files & 53 & the same 53 columns in UNSW, CIC-2018, ToN-IoT and BoT-IoT \\
+Phases 2--3 (cleaning, merge) & 46 & $-2$ IP addresses (M3), $-2$ bytes-per-second columns with NaN / inf (U2, B2, C3, T3),
+  $-2$ IP packet-length copies (M7), $-1$ \var{TCP_FLAGS} and $-1$ \var{ICMP_IPV4_TYPE} copies (M8);
+  $+1$ because \var{L7_PROTO} is split into \var{L7_MAIN} and \var{L7_SUB} (U3) \\
+Phase 5, step 0 (never features) & 39 & $-7$: 2 timestamps (M2), source port and DNS query ID (M5), 2 TTL (M4), FTP
+  return code (M10). Left: \textbf{31 numeric} and \textbf{8 code} columns \\
+Phase 5, encoding & 63 & the 8 code columns become \textbf{32} yes/no columns; \var{L7_SUB}, \var{ICMP_TYPE} and
+  \var{DNS_QUERY_TYPE} are not encoded (too rare or already covered) \\
+Phase 5, creation & 72 & $+9$ created features (5 ratios and rates, 4 behaviour flags): the \textbf{72 candidates} \\
+Phase 5, selection & \textbf{59} & $-13$: 2 fingerprints, 3 near-constant, 8 correlated (section 6) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering\small
+\caption{Candidates, removed and kept, per group.}
+\begin{tabular}{L{3.2cm}rrrL{7.0cm}}
+\toprule
+Group & Candidates & Removed & Kept & Removed columns \\
+\midrule
+Original numeric & 31 & 6 & \textbf{25} & \var{TCP_WIN_MAX_IN}, \var{TCP_WIN_MAX_OUT} (fingerprints);
+  \var{RETRANSMITTED_IN_PKTS}, \var{RETRANSMITTED_OUT_PKTS}, \var{SRC_TO_DST_IAT_AVG}, \var{DST_TO_SRC_IAT_AVG} (correlated) \\
+Created & 9 & 1 & \textbf{8} & \var{bytes_per_sec} (correlated with the existing throughput) \\
+Encoded & 32 & 6 & \textbf{26} & \var{client_urg}, \var{server_urg}, \var{server_cwr} (near-constant);
+  \var{client_ece}, \var{proto_tcp}, \var{l7_dns} (correlated) \\
+\midrule
+\textbf{Total} & \textbf{72} & \textbf{13} & \textbf{59} & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering\small
+\caption{The 59 final features by what they describe.}
+\begin{tabular}{L{3.1cm}rL{11.1cm}}
+\toprule
+What it describes & Count & Features \\
+\midrule
+Volume & 6 & \var{IN_BYTES}, \var{OUT_BYTES}, \var{IN_PKTS}, \var{OUT_PKTS}, \var{RETRANSMITTED_IN_BYTES},
+  \var{RETRANSMITTED_OUT_BYTES} \\
+Packet sizes & 7 & \var{LONGEST_FLOW_PKT}, \var{SHORTEST_FLOW_PKT}, and the 5 size bins \var{NUM_PKTS_UP_TO_128_BYTES}
+  \ldots\ \var{NUM_PKTS_1024_TO_1514_BYTES} \\
+Time and rate & 11 & \var{FLOW_DURATION_MILLISECONDS}, \var{DURATION_IN}, \var{DURATION_OUT}, the 2 average throughputs,
+  and the minimum, maximum and standard deviation of the gaps between packets in each direction (6) \\
+DNS & 1 & \var{DNS_TTL_ANSWER} \\
+\midrule
+\multicolumn{3}{l}{\emph{Original numeric columns: 25}} \\
+\midrule
+Created: ratios and rates & 4 & \var{in_bytes_per_pkt}, \var{out_bytes_per_pkt}, \var{out_in_ratio}, \var{pkts_per_sec} \\
+Created: behaviour flags & 4 & \var{no_answer}, \var{one_packet}, \var{syn_only}, \var{hit_timeout} \\
+\midrule
+\multicolumn{3}{l}{\emph{Created features: 8}} \\
+\midrule
+Destination port range & 3 & \var{port_well_known}, \var{port_registered}, \var{port_dynamic} \\
+Protocol & 2 & \var{proto_udp}, \var{proto_other} (TCP = both 0) \\
+Client TCP flags & 6 & \var{client_fin}, \var{client_syn}, \var{client_rst}, \var{client_psh}, \var{client_ack},
+  \var{client_cwr} \\
+Server TCP flags & 6 & \var{server_fin}, \var{server_syn}, \var{server_rst}, \var{server_psh}, \var{server_ack},
+  \var{server_ece} \\
+Application protocol & 9 & \var{l7_http}, \var{l7_tls}, \var{l7_unknown}, \var{l7_netbios}, \var{l7_88}, \var{l7_36},
+  \var{l7_37}, \var{l7_41}, \var{l7_other} (DNS flows are recognised by \var{DNS_TTL_ANSWER}) \\
+\midrule
+\multicolumn{3}{l}{\emph{Encoded columns: 26}} \\
+\midrule
+\textbf{Total} & \textbf{59} & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{reading}
+\begin{itemize}
+  \item \textbf{Most features are original NetFlow measurements} (25 of 59). Only 6 of the 31 numeric traffic columns
+        were removed: 2 because they identify the lab's machines, 4 because they repeated another column.
+  \item \textbf{8 of the 9 created features are kept;} the only one removed, \var{bytes_per_sec}, duplicated an
+        existing throughput column.
+  \item \textbf{The 26 encoded columns turn 5 code columns into usable yes/no information:}
+        \begin{itemize}
+          \item port range, protocol and application protocol: the type of service;
+          \item 12 TCP flags: how the connection behaved.
+        \end{itemize}
+  \item \textbf{Two encoded groups lost one column with no loss of information:}
+        \begin{itemize}
+          \item \var{proto_tcp} is implied when \var{proto_udp} and \var{proto_other} are both 0;
+          \item \var{l7_dns} is carried by \var{DNS_TTL_ANSWER}.
+        \end{itemize}
+\end{itemize}
+\end{reading}
+
+\subsection{Justification of the final set}
 
 \begin{reading}
 The final set has \textbf{59 features}: 25 original numeric columns, 8 created features and 26 encoded columns.

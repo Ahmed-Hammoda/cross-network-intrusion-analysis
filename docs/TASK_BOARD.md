@@ -117,6 +117,17 @@ with a `count` column, no upper limit; imbalance is handled with class and netwo
 | 4.6 | Class imbalance analysis (SQ3) | Cyrine Chabbar | ⬜ To do |
 | 4.7 | CICIoT2023 EDA, compared to NetFlow at family level | Yassine Mtibaa | 🔄 IoT23 EDA done; NetFlow comparison runs once the cleaned NetFlow files exist |
 
+**Merged NetFlow data** (Ahmed Hamouda does the whole EDA of the merged NetFlow table): notebook `07_eda_netflow`,
+summary in [`phase4_eda_netflow.md`](phase4_eda_netflow.md).
+
+| # | Task (merged NetFlow) | Owner | Status |
+|---|---|---|---|
+| 4.1 | Descriptive statistics and plots: summary of the key variables, median per family, histograms, box plots | Ahmed Hamouda | ✅ Done |
+| 4.2 | Correlation analysis: Pearson and Spearman heatmaps | Ahmed Hamouda | ✅ Done |
+| 4.3 | Relationships: Benign vs attack in each network, port range × family | Ahmed Hamouda | ✅ Done |
+| 4.5 | Normality check + tests: Mann–Whitney U (SQ1), Kolmogorov–Smirnov (SQ2) | Ahmed Hamouda | ✅ Done |
+| 4.6 | Class imbalance: behaviours and flows per family and network (§1) | Ahmed Hamouda | ✅ Done |
+
 ## Phase 5 — Feature engineering (Tue)
 
 Follows lab Parts 3–5. **First step: train/test split** — every encoder, scaler and selector is

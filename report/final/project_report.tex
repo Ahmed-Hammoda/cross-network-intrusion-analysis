@@ -26,7 +26,8 @@
 \usetikzlibrary{arrows.meta,positioning}
 
 \AddToHook{cmd/subsection/before}{\Needspace{8\baselineskip}}
-\AddToHook{cmd/section/before}{\Needspace{10\baselineskip}}
+% every section (the six phases, references and each appendix) starts on a new page
+\AddToHook{cmd/section/before}{\clearpage}
 
 \geometry{margin=1in}
 \captionsetup{font=small,labelfont=bf}

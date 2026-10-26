@@ -1,0 +1,21 @@
+feature,step,reason
+Tot_size,1 copy,= AVG
+Variance,1 copy,= Std²
+LLC,1 copy,= IPv
+IPv,1 copy,= 1 − ARP (ARP kept: names the non-IP share directly)
+IAT,1 copy,"≈ 1 / Rate (Spearman rho = -0.995, median Rate × IAT = 1.002); Rate kept: packets per second reads directly"
+Number,2 artefact,"packets per window: 10 for non-flood captures, 100 for floods (capture method)"
+Tot_sum,2 artefact,"= AVG × Number, inherits the Number artefact"
+window_duration,2 artefact,"= Number × IAT, inherits the Number artefact"
+Time_To_Live,2 artefact,"≈ 64 for every attacker, ≈ 99 for benign: identifies the lab machines' operating systems"
+ack_count,2 artefact,"= flag share × Number, inherits the Number artefact"
+syn_count,2 artefact,"= flag share × Number, inherits the Number artefact"
+fin_count,2 artefact,"= flag share × Number, inherits the Number artefact"
+rst_count,2 artefact,"= flag share × Number, inherits the Number artefact"
+ece_flag_number,3 near-constant,"one value in 99.68 % of rows, no family concentration"
+cwr_flag_number,3 near-constant,"one value in 99.77 % of rows, no family concentration"
+IRC,3 near-constant,"one value in 99.85 % of rows, no family concentration"
+IGMP,3 near-constant,"one value in 99.64 % of rows, no family concentration"
+proto_other,3 near-constant,"one value in 100.00 % of rows, no family concentration"
+ack_flag_number,4 correlated,"|rho| = 0.966 with syn_minus_ack, lower MI (0.522 vs 0.580)"
+Std,4 correlated,"|rho| = 0.966 with size_range, lower MI (0.534 vs 0.662)"

@@ -1,0 +1,8 @@
+attack_family,syn_minus_ack,app_share,control_share
+Benign,-0.9,0.9,0.0
+Denial of service,0.0,0.0,0.01
+Malware and botnets,0.0,0.0,0.0
+Reconnaissance,-0.5,0.5,0.1
+Interception and spoofing,-0.8,0.8,0.0
+Web and injection,-0.6,0.6,0.0
+Credential attacks,-0.7,0.7,0.0

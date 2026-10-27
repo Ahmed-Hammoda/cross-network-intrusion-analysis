@@ -1070,22 +1070,6 @@ import sys; sys.path.append("..")
 from src.config import *
 \end{lstlisting}
 
-\begin{table}[!htbp]\centering\small
-\caption{Notebooks and run order.}\label{tab:nb}
-\begin{tabular}{L{5.0cm}L{3.0cm}L{6.4cm}}
-\toprule
-Notebook & Owner & Content \\
-\midrule
-\texttt{01\_unsw}, \texttt{02\_cic18} & A.~Hamouda & phase 2: data understanding of UNSW, CIC-2018 \\
-\texttt{03\_ton}, \texttt{04\_bot} & C.~Chabbar, A.~Hamouda & phase 2: data understanding of ToN-IoT, BoT-IoT \\
-\texttt{01}--\texttt{04\_*\_cleaning} & A.~Hamouda & phase 3: cleaning of the four NetFlow datasets \\
-\texttt{05\_ciciot2023} & Y.~Mtibaa & phases 2--3: CICIoT2023 \\
-\texttt{06\_merge\_netflow} & A.~Hamouda & phase 3: merge of the NetFlow datasets \\
-\texttt{07\_eda\_netflow} / \texttt{07\_eda\_iot23} & A.~Hamouda / Y.~Mtibaa & phase 4: EDA \\
-\texttt{08\_features\_netflow} / \texttt{08\_features\_iot23} & A.~Hamouda / Y.~Mtibaa & phase 5: feature engineering \\
-\bottomrule
-\end{tabular}
-\end{table}
 Run order: NetFlow cleaning (01--04) $\rightarrow$ 06 $\rightarrow$ 07 $\rightarrow$ 08; CICIoT2023: 05 $\rightarrow$
 07 $\rightarrow$ 08. About 16\,GB of RAM is needed for the largest files.
 

@@ -162,8 +162,9 @@ packet windows), because a row there measures something different.
         up to 0.99), nor in a different dataset.
 \end{enumerate}
 
-\textbf{Feature engineering} produced a justified set of \textbf{59 features} for the NetFlow data, with every
-identifier of the network or the lab removed, and \textbf{31 features} for CICIoT2023. These results point to a
+\textbf{Feature engineering} produced a justified set of \textbf{44 features} for the NetFlow data, with every
+identifier of the network or the lab removed, and \textbf{21 features} for CICIoT2023; both sets are free of
+redundancy (no pair above $|\rho| = 0.90$, every VIF $\leq 10$) and pass every check before modelling. These results point to a
 clear expectation for the next step: a detector trained on some networks will lose accuracy on a new network, and
 the modelling plan proposed at the end is designed to measure that loss.
 
@@ -585,6 +586,39 @@ $|\rho| \geq 0.9$, several of them exact formulas:
 Such redundant columns are removed in feature selection (Section~5).
 \end{interp}
 
+\begin{interp}
+\textbf{Assumptions behind the correlation analysis.} Four assumptions were checked before using these tables
+(Table~\ref{tab:corrassump}).
+\begin{itemize}
+  \item \textbf{A1 -- columns.} CICIoT2023 uses all 38 numeric features (\var{Protocol_Type} is a code, tested with
+        $\chi^2$ instead). The NetFlow heatmap shows 12 of the 31 numeric columns for readability; computed on all 31,
+        \textbf{all 11 redundant NetFlow pairs lie outside the heatmap} (retransmitted bytes vs packets, largest vs
+        average gap, durations). The heatmap is therefore only an illustration: the redundancy decision uses every
+        column.
+  \item \textbf{A2 -- coefficient.} Spearman, because normality is rejected and the relations are monotonic, not linear.
+  \item \textbf{A3 -- sample.} The strength of a pair depends on the sample (CICIoT2023 \var{Max}--\var{AVG}: 0.950
+        in a random sample, 0.913 in the family-balanced one); decisions use the balanced sample.
+  \item \textbf{A4 -- significance.} H$_0$: $\rho = 0$ is rejected for every strong pair ($p < 0.001$). The useful
+        test is H$_0$: $|\rho| \leq 0.90$ against H$_1$: $|\rho| > 0.90$ (one-sided bootstrap, 500 resamples).
+        \textbf{Decision ($\alpha = 0.05$):} rejected for 11 NetFlow and 12 CICIoT2023 pairs (redundant); not
+        rejected for, e.g., \var{IN_BYTES}--\var{IN_PKTS} ($\rho = 0.894$, 95\% CI 0.893--0.896): related, but not copies.
+\end{itemize}
+\end{interp}
+
+\begin{table}[!htbp]\centering\small
+\caption{Correlation assumptions and their checks (\file{tables/*_eda_correlation_tests.csv}).}\label{tab:corrassump}
+\begin{tabular}{L{3.4cm}L{5.3cm}L{5.3cm}}
+\toprule
+Assumption & NetFlow & CICIoT2023 \\
+\midrule
+A1 all columns & heatmap 12 of 31; 18 of 26 strong pairs outside it & all 38 numeric features \\
+A2 coefficient & Spearman (normality rejected) & Spearman (normality rejected) \\
+A3 sample & 9 pairs $\geq 0.90$ only in the random sample & same redundant pairs in both samples \\
+A4 H$_0$: $|\rho| \leq 0.90$ & rejected for 11 of 26 pairs & rejected for 12 of 16 pairs \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \subsection{Relationships between variables}
 \fig[0.98\linewidth]{NetFlow_eda_benign_vs_attack.png}{Merged NetFlow: bytes and packets sent, Benign against attack,
 in each network (stratified sample, log scale).}
@@ -771,7 +805,8 @@ it alike.
 
 \subsection{Approach}
 Each data source has its own feature engineering, with the same sections and rules: creation, encoding,
-transformation and scaling, selection ($|\rho| \geq 0.95$), final feature set, and PCA. There is \textbf{no
+transformation and scaling, selection (correlated pairs tested against $|\rho| = 0.90$, exact dependences, VIF $\leq 10$;
+shared code in \file{src/redundancy.py}), final feature set, checks before modelling, and PCA. There is \textbf{no
 train/test split}, because the project stops before modelling. Steps that learn from the data are fitted on all the
 data and must be refitted on the training part before any model, to avoid leakage.
 
@@ -858,14 +893,22 @@ transformation.}
 \labimage[0.8\linewidth]{IoT23_fe_before_after.png}{CICIoT2023: features before and after transformation and scaling.}
 
 \subsection{Feature selection}
-Each removal has a reason, in five steps:
+Each removal has a reason, in seven steps:
 \begin{enumerate}
   \item exact copies;
   \item testbed fingerprints (columns that identify the lab, not the attack);
   \item near-constant columns ($\geq$ 99.5\% one value);
-  \item correlated pairs ($|\rho| \geq 0.95$), keeping the column with the higher mutual information with the family;
+  \item correlated pairs: a pair is redundant when a one-sided bootstrap test rejects H$_0$: $|\rho| \leq 0.90$
+        ($\alpha = 0.05$, the same threshold as the EDA); the column with the lower mutual information with the
+        family is removed;
+  \item exact linear dependences (e.g.\ one-hot columns that always add up to 1), which no pairwise correlation shows;
+  \item multicollinearity: while a variance inflation factor VIF $= 1/(1-R^2)$ is above 10, the feature with the
+        largest VIF is removed;
   \item a mutual information ranking.
 \end{enumerate}
+Steps 4--6 matter because duplicated information makes linear and distance-based models unstable and splits the
+importance of tree models between the copies. They replace the former rule ($|\rho| \geq 0.95$), which kept pairs
+that the EDA had already called redundant.
 
 \begin{table}[!htbp]\centering\small
 \caption{Selection results.}\label{tab:selection}
@@ -876,26 +919,31 @@ Step & NetFlow (72 candidates) & CICIoT2023 \\
 Copies & none (already removed in phase 3) & 5: \var{Tot_size}, \var{Variance}, \var{LLC}, \var{IPv}, \var{IAT} ($\approx 1/$\var{Rate}) \\
 Fingerprints & \var{TCP_WIN_MAX_IN}, \var{TCP_WIN_MAX_OUT} & 8: \var{Number} (10- vs 100-packet capture windows), \var{Time_To_Live}, and 6 columns built on \var{Number} \\
 Near-constant & 3 rare TCP flags & 5: 2 rare flags, \var{IRC}, \var{IGMP}, \var{proto_other} \\
-Correlated & 8 (e.g.\ retransmitted packets vs bytes) & 2: \var{ack_flag_number}, \var{Std} \\
+Correlated (tested) & 14 (e.g.\ retransmitted packets vs bytes, average vs largest gap, durations, packet and byte rates) & 4: \var{ack_flag_number}, \var{Std}, \var{byte_rate}, \var{AVG} \\
+Exact dependence & 1: \var{port_dynamic} (port ranges add up to 1) & 2: \var{proto_nonIP}, \var{fin_flag_number} \\
+VIF $> 10$ & 8: \var{IN_BYTES}, \var{OUT_BYTES}, \var{out_bytes_per_pkt}, \var{LONGEST_FLOW_PKT}, \dots & 6: \var{app_share}, \var{TCP}, \var{proto_TCP}, \var{syn_minus_ack}, \var{control_share}, \var{ICMP} \\
 \midrule
-\textbf{Final} & \textbf{59 features} & \textbf{31 features} (from 51 candidates) \\
+\textbf{Final} & \textbf{44 features} & \textbf{21 features} (from 51 candidates) \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\fig[0.8\linewidth]{NetFlow_fe_mutual_information.png}{NetFlow: mutual information of the 59 final features with the
+\fig[0.8\linewidth]{NetFlow_fe_mutual_information.png}{NetFlow: mutual information of the 44 final features with the
 attack family (orange = created feature).}
 
 \labimage[0.75\linewidth]{IoT23_fe_mi_ranking.png}{CICIoT2023: mutual information ranking of the final features.}
 
 \begin{interp}
-Table~\ref{tab:selection} summarises the selection. In NetFlow, \textbf{3 of the 5 most informative features are created ones} (\var{in_bytes_per_pkt},
-\var{out_in_ratio}, \var{out_bytes_per_pkt}), and 8 of the 9 created features survive the selection, which justifies
-their creation. The TCP window is removed although it separates families well: it is set by each lab machine's
-operating system, so a model would learn the testbed, not the attack. \textbf{CICIoT2023:} the packet-size features lead (\var{Max} 0.87, \var{AVG} 0.80,
-\var{Header_Length} 0.68), and 4 of the top 8 features are created ones (\var{size_range}, \var{syn_minus_ack},
-\var{size_cv}, \var{app_share}). The artefacts are removed even though \var{Tot_sum} has the highest mutual
-information of all (0.92): it inherits \var{Number}, which describes the capture method.
+Table~\ref{tab:selection} summarises the selection. In NetFlow, \textbf{the 2 most informative features are created
+ones} (\var{in_bytes_per_pkt} 1.17, \var{out_in_ratio} 1.17), and 5 of the 9 created features survive. After the log,
+a ratio is a difference of logs, so \var{IN_BYTES} $\approx$ \var{in_bytes_per_pkt} + \var{IN_PKTS} (VIF 4,263): the
+raw byte counts became redundant once the ratios existed. The TCP window is removed although it separates families
+well: it is set by each lab machine's operating system, so a model would learn the testbed, not the attack.
+\textbf{CICIoT2023:} the packet-size features lead (\var{Max} 0.87, \var{Header_Length} 0.68, \var{size_range} 0.66,
+\var{size_cv} 0.52). The domain features \var{syn_minus_ack}, \var{app_share} and \var{control_share} were informative
+but 92--99.99\% predictable from the kept columns ($R^2 = 1 - 1/\text{VIF}$), so their information stays in the set.
+The artefacts are removed even though \var{Tot_sum} has the highest mutual information of all (0.92): it inherits
+\var{Number}, which describes the capture method.
 \end{interp}
 
 \subsection{Final feature sets and how they support the objectives}
@@ -906,10 +954,10 @@ information of all (0.92): it inherits \var{Number}, which describes the capture
 & NetFlow (merged) & CICIoT2023 \\
 \midrule
 Starting point & 53 raw columns $\rightarrow$ 72 candidates & 39 window features $\rightarrow$ 51 candidates \\
-Original features kept & 25 (volume, sizes, timing, throughput, DNS) & 20 (sizes, rate, flag and protocol shares) \\
-Created features kept & 8 & 6 \\
-Encoded columns & 26 (port range, protocol, TCP flags, application) & 5 (protocol) \\
-\textbf{Total} & \textbf{59} & \textbf{31} \\
+Original features kept & 17 (packet counts and size bins, throughput, gaps, retransmissions, DNS) & 16 (sizes, rate, flag and protocol shares) \\
+Created features kept & 5 & 2 \\
+Encoded columns & 22 (port range, protocol, TCP flags, application) & 3 (protocol) \\
+\textbf{Total} & \textbf{44} & \textbf{21} \\
 Output & \texttt{netflow\_features.parquet} (17.5 M rows) & \texttt{IoT23\_features.parquet} (4.4 M rows) \\
 \bottomrule
 \end{tabular}
@@ -923,24 +971,53 @@ Output & \texttt{netflow\_features.parquet} (17.5 M rows) & \texttt{IoT23\_featu
   \item \textbf{SQ3:} they contain \textbf{only traffic behaviour}, with no IP address, timestamp, TTL, TCP window or
         capture artefact, so a future model has to learn the attack and not the network.
   \item \textbf{Model-ready:} skewed numbers are log-transformed and robust-scaled, codes are one-hot encoded, and
-        there are no duplicate columns.
+        there is no redundant column (Table~\ref{tab:checks}).
 \end{itemize}
 Data dictionaries: \file{tables/NetFlow_fe_dictionary.csv} and \file{tables/IoT23_fe_dictionary.csv}.
 \end{interp}
 
 \fig[0.72\linewidth]{NetFlow_fe_pca.png}{NetFlow: the stratified sample on the first two principal components of
-the 59 final features, coloured by family.}
+the 44 final features, coloured by family.}
 
 \labimage[\linewidth]{IoT23_fe_pca.png}{CICIoT2023: explained variance (left) and the first two principal components
-of the 31 final features (right), family-balanced sample.}
+of the 21 final features (right), family-balanced sample.}
 
 \begin{interp}
-In NetFlow (Figure~\ref{fig:NetFlow_fe_pca.png}), the first two components explain 42.8\% of the variation. Reconnaissance and fuzzing form their own
+In NetFlow (Figure~\ref{fig:NetFlow_fe_pca.png}), the first two components explain 43.2\% of the variation. Reconnaissance and fuzzing form their own
 clusters, but most families overlap: as the EDA showed, no single direction separates the attacks, so a detector
-will need many features together. \textbf{CICIoT2023} (Figure~\ref{fig:IoT23_fe_pca.png}): the first two components explain 67.9\% (10 components: 97.1\%). Benign, web and
+will need many features together. \textbf{CICIoT2023} (Figure~\ref{fig:IoT23_fe_pca.png}): the first two components explain 75.0\% (10 components: 98.2\%). Benign, web and
 credential traffic lie in an upper band, while denial of service and Mirai form separate stripes below; credential
 attacks overlap with Benign. PC1 is dominated by \var{Min}, partly because robust scaling stretches its very narrow
 middle range, so this map depends on the scaling choice.
+\end{interp}
+
+\subsection{Checks before modelling}
+Every assumption a model will rely on is checked on the exported feature sets (Table~\ref{tab:checks};
+\file{tables/*_fe_premodelling_checks.csv}).
+\begin{table}[!htbp]\centering\small
+\caption{Checks before modelling on the final feature sets.}\label{tab:checks}
+\begin{tabular}{L{6.2cm}L{3.9cm}L{3.9cm}}
+\toprule
+Check & NetFlow (44 features) & CICIoT2023 (21 features) \\
+\midrule
+No missing or infinite value; no constant column & pass & pass \\
+No label, identifier, fingerprint or artefact column & pass & pass \\
+Codes encoded, not used as numbers & pass & pass \\
+No pair with $|\rho| \geq 0.90$ & pass (largest 0.884) & pass (largest 0.831) \\
+No exact linear dependence (full rank) & pass (44 of 44) & pass (21 of 21) \\
+No multicollinearity (largest VIF $\leq 10$) & pass (9.84) & pass (8.69) \\
+No duplicate row & 27\% of behaviours share a feature vector: keep copies on one side of the split & pass (0) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{interp}
+Both feature sets pass every check that can be made without a model. Four points must be handled when the model is
+built: (1) the features are not normal, so models without a normality assumption are used (trees, logistic
+regression), not LDA or Gaussian naive Bayes; (2) the classes are very imbalanced (NetFlow families up to 26,317$\times$,
+CICIoT2023 217$\times$), so the split is stratified, classes are weighted and macro-F1 is reported; (3) rows that share a
+feature vector (NetFlow) or carry conflicting labels (187,256 CICIoT2023 windows) are kept on one side of the split or
+filtered; (4) the scaling and the selection are refitted on the training part only.
 \end{interp}
 
 \begin{keep}
@@ -1003,8 +1080,9 @@ is logged and can be rebuilt from the repository (Appendix A).
 
 \subsection{Future modelling plan (not implemented)}
 \begin{enumerate}
-  \item \textbf{Split first:} 80/20, grouped by behaviour so that the same behaviour is never on both sides; refit
-        the scaling and the selection on the training part only.
+  \item \textbf{Split first:} 80/20, grouped by feature vector so that the same values are never on both sides
+        (27\% of NetFlow behaviours repeat a vector of the 44 features); refit the scaling and the selection on the
+        training part only.
   \item \textbf{Three evaluations:}
         \begin{enumerate}
           \item inside each network;

@@ -1,0 +1,14 @@
+check,result,value
+no missing or infinite value in the features,PASS,0
+no constant feature,PASS,0
+"no label, identifier, network or fingerprint column among the features",PASS,none
+"code columns one-hot / bit encoded, not used as numbers",PASS,"port, protocol, flags, L7 -> 0/1 columns"
+no pair of features with |Spearman rho| >= 0.9,PASS,"largest: port_well_known – port_registered, rho = -0.884"
+no exact linear dependence (full rank),PASS,rank 44 of 44
+no multicollinearity (largest VIF <= 10),PASS,SRC_TO_DST_IAT_MAX = 9.84
+features are not normally distributed (phase 4),TO HANDLE IN MODELLING,"use models without a normality assumption (trees, logistic regression, SVM); avoid LDA / Gaussian naive Bayes"
+class imbalance,TO HANDLE IN MODELLING,"families 26,317x (behaviours) -> stratified split, class weights, macro-F1"
+one row = one behaviour standing for `count` flows,TO HANDLE IN MODELLING,use count as a sample weight if the flow mix matters; never as a feature
+behaviours with the same feature values,TO HANDLE IN MODELLING,"4,742,419 rows (27.0 %) repeat an earlier feature vector -> keep the copies of a vector in the same split (or drop them) so the test set is not seen in training"
+rows whose label differs between networks,TO HANDLE IN MODELLING,"38,453 rows (ambiguous_across_sources) -> report or filter them"
+"transformation, scaling and selection fitted on all the data",TO HANDLE IN MODELLING,"split first (by network for SQ3: train on 3 networks, test on the 4th), then refit them on the training part only"

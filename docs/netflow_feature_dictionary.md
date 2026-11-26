@@ -12,7 +12,7 @@ below are the corrected ones.
 **Direction:** "in" / "src → dst" = from the client (who started the flow) to the server; "out" / "dst → src" = the
 answer from the server.
 
-**Last column — what happened in the project:** ✅ = one of the 59 final features (phase 5; numeric columns are
+**Last column — what happened in the project:** ✅ = one of the 44 final features (phase 5; numeric columns are
 log(1 + x)-transformed and robust-scaled) · 🔁 = encoded into new 0/1 columns · ❌ = not a feature, with the decision
 code of `report/data_problems/phase2_data_problems.pdf` or the phase 5 reason.
 
@@ -44,8 +44,8 @@ code of `report/data_problems/phase2_data_problems.pdf` or the phase 5 reason.
 
 | Feature | Meaning | Unit | Type | In the project |
 |---|---|---|---|---|
-| `IN_BYTES` | bytes sent by the client | bytes | integer | ✅ |
-| `OUT_BYTES` | bytes sent back by the server | bytes | integer | ✅ |
+| `IN_BYTES` | bytes sent by the client | bytes | integer | ❌ VIF = 4,263: after the log it is ≈ `in_bytes_per_pkt` + `IN_PKTS` (phase 5) |
+| `OUT_BYTES` | bytes sent back by the server | bytes | integer | ❌ VIF = 2,440: predictable from `out_in_ratio` and the other volume columns (phase 5) |
 | `IN_PKTS` | packets sent by the client | packets | integer | ✅ |
 | `OUT_PKTS` | packets sent back by the server | packets | integer | ✅ |
 | `RETRANSMITTED_IN_BYTES` | TCP bytes retransmitted by the client | bytes | integer | ✅ |
@@ -57,7 +57,7 @@ code of `report/data_problems/phase2_data_problems.pdf` or the phase 5 reason.
 
 | Feature | Meaning | Unit | Type | In the project |
 |---|---|---|---|---|
-| `LONGEST_FLOW_PKT` | largest packet of the flow | bytes | integer | ✅ |
+| `LONGEST_FLOW_PKT` | largest packet of the flow | bytes | integer | ❌ VIF = 19.6: predictable from the packet-size bins (phase 5) |
 | `SHORTEST_FLOW_PKT` | smallest packet of the flow | bytes | integer | ✅ |
 | `MIN_IP_PKT_LEN` | smallest IP packet length | bytes | integer | ❌ 0 on one-way flows, otherwise equal to `SHORTEST_FLOW_PKT` (M7) |
 | `MAX_IP_PKT_LEN` | largest IP packet length | bytes | integer | ❌ always equal to `LONGEST_FLOW_PKT` (M7) |
@@ -71,9 +71,9 @@ code of `report/data_problems/phase2_data_problems.pdf` or the phase 5 reason.
 
 | Feature | Meaning | Unit | Type | In the project |
 |---|---|---|---|---|
-| `FLOW_DURATION_MILLISECONDS` | duration of the flow (cut at about 120 s by the exporter) | ms | integer | ✅ |
-| `DURATION_IN` | duration of the client-to-server stream | ms | integer | ✅ |
-| `DURATION_OUT` | duration of the server-to-client stream | ms | integer | ✅ |
+| `FLOW_DURATION_MILLISECONDS` | duration of the flow (cut at about 120 s by the exporter) | ms | integer | ❌ ρ = 0.94 with `DURATION_IN` (phase 5) |
+| `DURATION_IN` | duration of the client-to-server stream | ms | integer | ❌ ρ = 0.91 with `SRC_TO_DST_IAT_MAX` (phase 5) |
+| `DURATION_OUT` | duration of the server-to-client stream | ms | integer | ❌ ρ = 0.91 with `DST_TO_SRC_IAT_MAX` (phase 5) |
 | `SRC_TO_DST_SECOND_BYTES` | client-to-server bytes per second | bytes/s | float or integer | ❌ dropped before cleaning: NaN / inf on 0-ms flows, type differs between datasets (U2, B2, C3, T3) |
 | `DST_TO_SRC_SECOND_BYTES` | server-to-client bytes per second | bytes/s | float or integer | ❌ same as above |
 | `SRC_TO_DST_AVG_THROUGHPUT` | average client-to-server throughput | bits/s | integer | ✅ |
@@ -81,11 +81,11 @@ code of `report/data_problems/phase2_data_problems.pdf` or the phase 5 reason.
 | `SRC_TO_DST_IAT_MIN` | smallest gap between two client packets | ms | integer | ✅ |
 | `SRC_TO_DST_IAT_MAX` | largest gap between two client packets | ms | integer | ✅ |
 | `SRC_TO_DST_IAT_AVG` | average gap between client packets | ms | integer | ❌ ρ = 0.96 with `SRC_TO_DST_IAT_MAX` (phase 5) |
-| `SRC_TO_DST_IAT_STDDEV` | standard deviation of the gaps between client packets | ms | integer | ✅ |
+| `SRC_TO_DST_IAT_STDDEV` | standard deviation of the gaps between client packets | ms | integer | ❌ ρ = 0.94 with `SRC_TO_DST_IAT_MAX` (phase 5) |
 | `DST_TO_SRC_IAT_MIN` | smallest gap between two server packets | ms | integer | ✅ |
 | `DST_TO_SRC_IAT_MAX` | largest gap between two server packets | ms | integer | ✅ |
 | `DST_TO_SRC_IAT_AVG` | average gap between server packets | ms | integer | ❌ ρ = 0.97 with `DST_TO_SRC_IAT_MAX` (phase 5) |
-| `DST_TO_SRC_IAT_STDDEV` | standard deviation of the gaps between server packets | ms | integer | ✅ |
+| `DST_TO_SRC_IAT_STDDEV` | standard deviation of the gaps between server packets | ms | integer | ❌ ρ = 0.94 with `DST_TO_SRC_IAT_MAX` (phase 5) |
 
 ## TCP behaviour
 
@@ -110,10 +110,10 @@ code of `report/data_problems/phase2_data_problems.pdf` or the phase 5 reason.
 
 | Status | Count |
 |---|---|
-| ✅ kept as a final feature | 25 |
+| ✅ kept as a final feature | 17 |
 | 🔁 encoded into 0/1 columns | 5 (`L4_DST_PORT`, `PROTOCOL`, `L7_PROTO`, `CLIENT_TCP_FLAGS`, `SERVER_TCP_FLAGS`) |
-| ❌ not a feature | 23 |
+| ❌ not a feature | 31 |
 | **Total** | **53** |
 
-The final model input also contains 8 created features (ratios, rates, behaviour flags) and the encoded columns:
-59 features in total, listed in `tables/NetFlow_fe_dictionary.csv` and `report/features/phase5_features_report.pdf`.
+The final model input also contains 5 created features (2 ratios, 3 behaviour flags) and 22 encoded columns:
+44 features in total, listed in `tables/NetFlow_fe_dictionary.csv` and `report/features/phase5_features_report.pdf`.

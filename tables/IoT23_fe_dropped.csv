@@ -17,5 +17,15 @@ cwr_flag_number,3 near-constant,"one value in 99.77 % of rows, no family concent
 IRC,3 near-constant,"one value in 99.85 % of rows, no family concentration"
 IGMP,3 near-constant,"one value in 99.64 % of rows, no family concentration"
 proto_other,3 near-constant,"one value in 100.00 % of rows, no family concentration"
-ack_flag_number,4 correlated,"|rho| = 0.966 with syn_minus_ack, lower MI (0.522 vs 0.580)"
-Std,4 correlated,"|rho| = 0.966 with size_range, lower MI (0.534 vs 0.662)"
+ack_flag_number,4 correlated,"rho = -0.966 with syn_minus_ack (95% CI -0.967 to -0.965, H0: |rho| <= 0.9 rejected); lower MI (0.522 vs 0.580)"
+Std,4 correlated,"rho = 0.966 with size_range (95% CI 0.965 to 0.966, H0: |rho| <= 0.9 rejected); lower MI (0.534 vs 0.662)"
+byte_rate,4 correlated,"rho = 0.925 with Rate (95% CI 0.924 to 0.926, H0: |rho| <= 0.9 rejected); lower MI (0.416 vs 0.439)"
+AVG,4 correlated,"rho = 0.913 with Max (95% CI 0.911 to 0.914, H0: |rho| <= 0.9 rejected); lower MI (0.801 vs 0.872)"
+proto_nonIP,5 exact dependence,"exact linear dependence with proto_ICMP, proto_TCP, proto_UDP, proto_GRE; lowest MI in it (0.004)"
+fin_flag_number,5 exact dependence,"exact linear dependence with syn_flag_number, rst_flag_number, control_share; lowest MI in it (0.097)"
+app_share,6 multicollinearity,"VIF = 13,521.1 (> 10): explained by the other features (R² = 1.000)"
+TCP,6 multicollinearity,VIF = 59.5 (> 10): explained by the other features (R² = 0.983)
+proto_TCP,6 multicollinearity,VIF = 49.2 (> 10): explained by the other features (R² = 0.980)
+syn_minus_ack,6 multicollinearity,VIF = 16.9 (> 10): explained by the other features (R² = 0.941)
+control_share,6 multicollinearity,VIF = 13.2 (> 10): explained by the other features (R² = 0.924)
+ICMP,6 multicollinearity,VIF = 13.1 (> 10): explained by the other features (R² = 0.924)

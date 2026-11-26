@@ -45,7 +45,7 @@ Progress on every task is tracked in the [task board](docs/TASK_BOARD.md).
 | [NetFlow feature dictionary](docs/netflow_feature_dictionary.md) | The 53 NetFlow v3 features: meaning, unit, type, what happened to each |
 | [CICIoT2023 feature dictionary](docs/ciciot_feature_dictionary.md) | The 39 CICIoT2023 features |
 | [Phase 4 — EDA, NetFlow](docs/phase4_eda_netflow.md) · [report (PDF)](report/eda/phase4_eda_report.pdf) | Statistics, plots, correlation, hypothesis tests of the merged NetFlow data |
-| [Phase 5 — Feature engineering, NetFlow](docs/phase5_features_netflow.md) · [report (PDF)](report/features/phase5_features_report.pdf) · [explained (PDF)](report/features/phase5_explained.pdf) | Creation, encoding, scaling, selection, final 59 features |
+| [Phase 5 — Feature engineering, NetFlow](docs/phase5_features_netflow.md) · [report (PDF)](report/features/phase5_features_report.pdf) · [explained (PDF)](report/features/phase5_explained.pdf) | Creation, encoding, scaling, selection, final 44 features |
 | [Decision log](docs/decision_log.md) | Every cleaning, integration, EDA and feature decision |
 | [Team plan](docs/team_plan.md) | Who owns which datasets and notebooks |
 | [Notebook guide](notebooks/README.md) | Every notebook, its owner and the run order |

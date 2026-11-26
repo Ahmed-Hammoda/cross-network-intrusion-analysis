@@ -1,0 +1,13 @@
+check,result,value
+no missing or infinite value in the features,PASS,0
+no constant feature,PASS,0
+no exact duplicate window (independent observations),PASS,0
+"no label, identifier or capture-artefact column among the features",PASS,none
+no pair of features with |Spearman rho| >= 0.9,PASS,"largest: Max – size_range, rho = 0.831"
+no exact linear dependence (full rank),PASS,rank 21 of 21
+no multicollinearity (largest VIF <= 10),PASS,Header_Length = 8.69
+"categorical code one-hot encoded, not used as a number",PASS,Protocol_Type -> proto_* columns
+features are not normally distributed (phase 4),TO HANDLE IN MODELLING,"use models without a normality assumption (trees, logistic regression, SVM); avoid LDA / Gaussian naive Bayes"
+class imbalance,TO HANDLE IN MODELLING,"families 217x, labels 167x -> stratified split, class weights, macro-F1"
+rows whose features also appear under another label,TO HANDLE IN MODELLING,"187,256 rows -> filter with ~conflicting_features before training"
+"transformation, scaling and selection fitted on all the data",TO HANDLE IN MODELLING,"split first, then refit them on the training part only (data leakage)"

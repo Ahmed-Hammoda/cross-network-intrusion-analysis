@@ -106,7 +106,7 @@ Each data source has one EDA notebook (follows lab 4): `07_eda_netflow` (merged 
 | # | Task | Merged NetFlow (Ahmed Hamouda) | CICIoT2023 (Yassine Mtibaa) |
 |---|---|---|---|
 | 4.1 | Descriptive statistics and distributions (log scale), per family and per network | ✅ | ✅ |
-| 4.2 | Correlation analysis: Pearson and Spearman heatmaps | ✅ | ✅ |
+| 4.2 | Correlation analysis: Pearson and Spearman heatmaps; assumptions checked (columns, coefficient, sample, H₀: \|ρ\| ≤ 0.90) | ✅ | ✅ |
 | 4.3 | Relationships between features and the target (`is_attack`, `attack_family`) | ✅ | ✅ |
 | 4.4 | Patterns: Benign vs attack per network, port range × family / flag fingerprints, DoS vs DDoS | ✅ | ✅ |
 | 4.5 | Normality check (→ non-parametric tests) | ✅ | ✅ |
@@ -124,7 +124,8 @@ feature set. **There is no modelling in the project, so no train/test split:** t
 fitted on all the data and must be refitted on a training part before any model. Notebooks: `08_features_netflow`
 (summary in [`phase5_features_netflow.md`](phase5_features_netflow.md), report
 `report/features/phase5_features_report.pdf`) and `08_features_iot23`. Both use the same sections and rules
-(|ρ| ≥ 0.95, standard deviation when IQR = 0).
+(|ρ| > 0.90 decided by a bootstrap test, exact linear dependences, VIF ≤ 10 — `src/redundancy.py`; standard deviation
+when IQR = 0).
 
 | # | Task | Merged NetFlow (Ahmed Hamouda) | CICIoT2023 (Yassine Mtibaa) |
 |---|---|---|---|
@@ -132,9 +133,10 @@ fitted on all the data and must be refitted on a training part before any model.
 | 5.2 | Encoding of the code columns | ✅ port range, protocol, TCP flag bits, L7 protocol | ✅ protocol (one-hot) |
 | 5.3 | Transformation and scaling | ✅ log(1 + x), robust scaling | ✅ log(1 + x) and Yeo-Johnson, robust scaling |
 | 5.4 | Validation: before / after, new features vs target | ✅ | ✅ |
-| 5.5 | Selection: fingerprints, near-constant, correlated pairs, mutual information | ✅ 72 → 59 features | ✅ 51 → 31 features |
+| 5.5 | Selection: fingerprints, near-constant, correlated pairs (tested), exact dependences, VIF, mutual information | ✅ 72 → 44 features | ✅ 51 → 21 features |
 | 5.6 | Final feature set: justification, data dictionary, export | ✅ `tables/NetFlow_fe_dictionary.csv` | ✅ `tables/IoT23_fe_dictionary.csv` |
 | 5.7 | PCA (2-D view of the families) | ✅ | ✅ |
+| 5.8 | Checks before modelling (redundancy, leakage, encoding, missing values) | ✅ 7 of 7 pass | ✅ 8 of 8 pass |
 
 **Removed from the plan:** train/test split and model-based importance (random forest): the project stops before
 modelling, and mutual information ranks the features without a model.

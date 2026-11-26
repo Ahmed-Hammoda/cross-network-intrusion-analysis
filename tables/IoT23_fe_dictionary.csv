@@ -9,21 +9,21 @@ rst_count,original,packets with the RST flag in the window,,yeo-johnson,median /
 Tot_sum,original,total bytes in the window,,log1p,RobustScaler (median / IQR),False,,"= AVG × Number, inherits the Number artefact"
 Min,original,smallest packet (bytes),,yeo-johnson,RobustScaler (median / IQR),True,0.453,
 Max,original,largest packet (bytes),,log1p,RobustScaler (median / IQR),True,0.872,
-AVG,original,mean packet size (bytes),,log1p,RobustScaler (median / IQR),True,0.801,
-Std,original,standard deviation of packet size (bytes),,log1p,RobustScaler (median / IQR),False,0.534,"|rho| = 0.966 with size_range, lower MI (0.534 vs 0.662)"
+AVG,original,mean packet size (bytes),,log1p,RobustScaler (median / IQR),False,0.801,"rho = 0.913 with Max (95% CI 0.911 to 0.914, H0: |rho| <= 0.9 rejected); lower MI (0.801 vs 0.872)"
+Std,original,standard deviation of packet size (bytes),,log1p,RobustScaler (median / IQR),False,0.534,"rho = 0.966 with size_range (95% CI 0.965 to 0.966, H0: |rho| <= 0.9 rejected); lower MI (0.534 vs 0.662)"
 Tot_size,original,mean packet size (bytes),,log1p,RobustScaler (median / IQR),False,,= AVG
 IAT,original,mean time between packets (s),,yeo-johnson,RobustScaler (median / IQR),False,,"≈ 1 / Rate (Spearman rho = -0.995, median Rate × IAT = 1.002); Rate kept: packets per second reads directly"
 Number,original,packets in the window,,yeo-johnson,RobustScaler (median / IQR),False,,"packets per window: 10 for non-flood captures, 100 for floods (capture method)"
 Variance,original,variance of packet size,,log1p,RobustScaler (median / IQR),False,,= Std²
-byte_rate,created,bytes per second,AVG × Rate,yeo-johnson,RobustScaler (median / IQR),True,0.416,
+byte_rate,created,bytes per second,AVG × Rate,yeo-johnson,RobustScaler (median / IQR),False,0.416,"rho = 0.925 with Rate (95% CI 0.924 to 0.926, H0: |rho| <= 0.9 rejected); lower MI (0.416 vs 0.439)"
 window_duration,created,time spanned by the window (s),Number × IAT,yeo-johnson,RobustScaler (median / IQR),False,,"= Number × IAT, inherits the Number artefact"
 size_range,created,largest − smallest packet (bytes),Max − Min,log1p,RobustScaler (median / IQR),True,0.662,
 size_cv,created,relative spread of packet sizes,Std / AVG,yeo-johnson,RobustScaler (median / IQR),True,0.519,
-fin_flag_number,original,share of packets with the FIN flag,,none,none,True,0.097,
+fin_flag_number,original,share of packets with the FIN flag,,none,none,False,0.097,"exact linear dependence with syn_flag_number, rst_flag_number, control_share; lowest MI in it (0.097)"
 syn_flag_number,original,share of packets with the SYN flag,,none,none,True,0.232,
 rst_flag_number,original,share of packets with the RST flag,,none,none,True,0.108,
 psh_flag_number,original,share of packets with the PSH flag,,none,none,True,0.329,
-ack_flag_number,original,share of packets with the ACK flag,,none,none,False,0.522,"|rho| = 0.966 with syn_minus_ack, lower MI (0.522 vs 0.580)"
+ack_flag_number,original,share of packets with the ACK flag,,none,none,False,0.522,"rho = -0.966 with syn_minus_ack (95% CI -0.967 to -0.965, H0: |rho| <= 0.9 rejected); lower MI (0.522 vs 0.580)"
 ece_flag_number,original,share of packets with the ECE flag,,none,none,False,,"one value in 99.68 % of rows, no family concentration"
 cwr_flag_number,original,share of packets with the CWR flag,,none,none,False,,"one value in 99.77 % of rows, no family concentration"
 HTTP,original,share of HTTP packets,,none,none,True,0.111,
@@ -33,20 +33,20 @@ Telnet,original,share of Telnet packets,,none,none,True,0.002,
 SMTP,original,share of SMTP packets,,none,none,True,0.0,
 SSH,original,share of SSH packets,,none,none,True,0.086,
 IRC,original,share of IRC packets,,none,none,False,,"one value in 99.85 % of rows, no family concentration"
-TCP,original,share of TCP packets,,none,none,True,0.504,
+TCP,original,share of TCP packets,,none,none,False,0.504,VIF = 59.5 (> 10): explained by the other features (R² = 0.983)
 UDP,original,share of UDP packets,,none,none,True,0.341,
 DHCP,original,share of DHCP packets,,none,none,True,0.011,
 ARP,original,share of non-IP (ARP) packets,,none,none,True,0.152,
-ICMP,original,share of ICMP packets,,none,none,True,0.125,
+ICMP,original,share of ICMP packets,,none,none,False,0.125,VIF = 13.1 (> 10): explained by the other features (R² = 0.924)
 IGMP,original,share of IGMP packets,,none,none,False,,"one value in 99.64 % of rows, no family concentration"
 IPv,original,share of IP packets,,none,none,False,,= 1 − ARP (ARP kept: names the non-IP share directly)
 LLC,original,share of LLC frames,,none,none,False,,= IPv
-syn_minus_ack,created,SYN share − ACK share: half-open handshakes,syn_flag_number − ack_flag_number,none,none,True,0.58,
-app_share,created,share of packets from a known application,HTTP + HTTPS + DNS + Telnet + SMTP + SSH + IRC,none,none,True,0.473,
-control_share,created,SYN + FIN + RST shares: connection control packets,syn + fin + rst flag shares,none,none,True,0.316,
-proto_nonIP,one-hot,1 if the window's protocol is nonIP,one-hot of Protocol_Type,none,none,True,0.004,
+syn_minus_ack,created,SYN share − ACK share: half-open handshakes,syn_flag_number − ack_flag_number,none,none,False,0.58,VIF = 16.9 (> 10): explained by the other features (R² = 0.941)
+app_share,created,share of packets from a known application,HTTP + HTTPS + DNS + Telnet + SMTP + SSH + IRC,none,none,False,0.473,"VIF = 13,521.1 (> 10): explained by the other features (R² = 1.000)"
+control_share,created,SYN + FIN + RST shares: connection control packets,syn + fin + rst flag shares,none,none,False,0.316,VIF = 13.2 (> 10): explained by the other features (R² = 0.924)
+proto_nonIP,one-hot,1 if the window's protocol is nonIP,one-hot of Protocol_Type,none,none,False,0.004,"exact linear dependence with proto_ICMP, proto_TCP, proto_UDP, proto_GRE; lowest MI in it (0.004)"
 proto_ICMP,one-hot,1 if the window's protocol is ICMP,one-hot of Protocol_Type,none,none,True,0.047,
-proto_TCP,one-hot,1 if the window's protocol is TCP,one-hot of Protocol_Type,none,none,True,0.207,
+proto_TCP,one-hot,1 if the window's protocol is TCP,one-hot of Protocol_Type,none,none,False,0.207,VIF = 49.2 (> 10): explained by the other features (R² = 0.980)
 proto_UDP,one-hot,1 if the window's protocol is UDP,one-hot of Protocol_Type,none,none,True,0.023,
 proto_GRE,one-hot,1 if the window's protocol is GRE,one-hot of Protocol_Type,none,none,True,0.225,
 proto_other,one-hot,1 if the window's protocol is other,one-hot of Protocol_Type,none,none,False,,"one value in 100.00 % of rows, no family concentration"

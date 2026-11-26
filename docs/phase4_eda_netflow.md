@@ -12,7 +12,7 @@ in `07_eda_iot23` (Yassine Mtibaa).
 |---|---|
 | Descriptive statistics | §1 rows per family and network; §2 mean, median, std, IQR, skewness of 4 key variables, median per family |
 | Plots | §1 bar chart of families; §3 histograms (log scale) and box plots by family |
-| Correlation analysis / heatmaps | §4 Pearson and Spearman heatmaps of 12 traffic features |
+| Correlation analysis / heatmaps | §4 Pearson and Spearman heatmaps of 12 traffic features; §4.1 assumptions checked on all 31 numeric columns (the heatmap misses all 11 redundant pairs) |
 | Relationships between variables | §5 Benign vs attack in each network; destination port range × family |
 | Justified hypothesis tests with interpretation | §6 normality check, then Mann–Whitney U (SQ1) and Kolmogorov–Smirnov (SQ2) |
 

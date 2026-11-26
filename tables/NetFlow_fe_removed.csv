@@ -4,11 +4,26 @@ TCP_WIN_MAX_OUT,2 fingerprint,TCP window size is set by the operating system of 
 client_urg,3 near-constant,one value in 99.96 % of behaviours
 server_urg,3 near-constant,one value in 100.00 % of behaviours
 server_cwr,3 near-constant,one value in 99.79 % of behaviours
-client_ece,4 correlated,"rho = 1.000 with client_cwr, lower mutual information (0.062 vs 0.062)"
-RETRANSMITTED_OUT_PKTS,4 correlated,"rho = 0.997 with RETRANSMITTED_OUT_BYTES, lower mutual information (0.118 vs 0.219)"
-RETRANSMITTED_IN_PKTS,4 correlated,"rho = 0.984 with RETRANSMITTED_IN_BYTES, lower mutual information (0.252 vs 0.420)"
-proto_tcp,4 correlated,"rho = -0.976 with proto_udp, lower mutual information (0.100 vs 0.100)"
-l7_dns,4 correlated,"rho = 0.971 with DNS_TTL_ANSWER, lower mutual information (0.119 vs 0.146)"
-DST_TO_SRC_IAT_AVG,4 correlated,"rho = 0.965 with DST_TO_SRC_IAT_MAX, lower mutual information (0.469 vs 0.547)"
-SRC_TO_DST_IAT_AVG,4 correlated,"rho = 0.958 with SRC_TO_DST_IAT_MAX, lower mutual information (0.540 vs 0.622)"
-bytes_per_sec,4 correlated,"rho = 0.950 with SRC_TO_DST_AVG_THROUGHPUT, lower mutual information (0.776 vs 0.778)"
+client_ece,4 correlated,"rho = 1.000 with client_cwr (95% CI 1.000 to 1.000, H0: |rho| <= 0.9 rejected); lower MI (0.062 vs 0.062)"
+RETRANSMITTED_OUT_PKTS,4 correlated,"rho = 0.997 with RETRANSMITTED_OUT_BYTES (95% CI 0.997 to 0.997, H0: |rho| <= 0.9 rejected); lower MI (0.118 vs 0.219)"
+RETRANSMITTED_IN_PKTS,4 correlated,"rho = 0.984 with RETRANSMITTED_IN_BYTES (95% CI 0.984 to 0.985, H0: |rho| <= 0.9 rejected); lower MI (0.252 vs 0.420)"
+proto_tcp,4 correlated,"rho = -0.976 with proto_udp (95% CI -0.978 to -0.974, H0: |rho| <= 0.9 rejected); lower MI (0.100 vs 0.100)"
+l7_dns,4 correlated,"rho = 0.971 with DNS_TTL_ANSWER (95% CI 0.969 to 0.974, H0: |rho| <= 0.9 rejected); lower MI (0.119 vs 0.146)"
+DST_TO_SRC_IAT_AVG,4 correlated,"rho = 0.965 with DST_TO_SRC_IAT_MAX (95% CI 0.964 to 0.966, H0: |rho| <= 0.9 rejected); lower MI (0.469 vs 0.547)"
+SRC_TO_DST_IAT_AVG,4 correlated,"rho = 0.958 with SRC_TO_DST_IAT_MAX (95% CI 0.957 to 0.959, H0: |rho| <= 0.9 rejected); lower MI (0.540 vs 0.622)"
+bytes_per_sec,4 correlated,"rho = 0.950 with SRC_TO_DST_AVG_THROUGHPUT (95% CI 0.949 to 0.951, H0: |rho| <= 0.9 rejected); lower MI (0.776 vs 0.778)"
+FLOW_DURATION_MILLISECONDS,4 correlated,"rho = 0.943 with DURATION_IN (95% CI 0.941 to 0.945, H0: |rho| <= 0.9 rejected); lower MI (0.570 vs 0.579)"
+SRC_TO_DST_IAT_STDDEV,4 correlated,"rho = 0.939 with SRC_TO_DST_IAT_MAX (95% CI 0.937 to 0.942, H0: |rho| <= 0.9 rejected); lower MI (0.505 vs 0.622)"
+DST_TO_SRC_IAT_STDDEV,4 correlated,"rho = 0.937 with DST_TO_SRC_IAT_MAX (95% CI 0.935 to 0.940, H0: |rho| <= 0.9 rejected); lower MI (0.462 vs 0.547)"
+pkts_per_sec,4 correlated,"rho = 0.930 with SRC_TO_DST_AVG_THROUGHPUT (95% CI 0.929 to 0.931, H0: |rho| <= 0.9 rejected); lower MI (0.733 vs 0.778)"
+DURATION_OUT,4 correlated,"rho = 0.913 with DST_TO_SRC_IAT_MAX (95% CI 0.911 to 0.916, H0: |rho| <= 0.9 rejected); lower MI (0.492 vs 0.547)"
+DURATION_IN,4 correlated,"rho = 0.906 with SRC_TO_DST_IAT_MAX (95% CI 0.903 to 0.908, H0: |rho| <= 0.9 rejected); lower MI (0.579 vs 0.622)"
+port_dynamic,5 exact dependence,"exact linear dependence with port_well_known, port_registered; lowest MI in it (0.039)"
+IN_BYTES,6 multicollinearity,"VIF = 4,263.1 (> 10): explained by the other features (R² = 1.000)"
+OUT_BYTES,6 multicollinearity,"VIF = 2,440.1 (> 10): explained by the other features (R² = 1.000)"
+out_bytes_per_pkt,6 multicollinearity,VIF = 35.5 (> 10): explained by the other features (R² = 0.972)
+l7_http,6 multicollinearity,VIF = 33.1 (> 10): explained by the other features (R² = 0.970)
+server_syn,6 multicollinearity,VIF = 25.7 (> 10): explained by the other features (R² = 0.961)
+LONGEST_FLOW_PKT,6 multicollinearity,VIF = 19.6 (> 10): explained by the other features (R² = 0.949)
+client_ack,6 multicollinearity,VIF = 18.3 (> 10): explained by the other features (R² = 0.945)
+no_answer,6 multicollinearity,VIF = 17.0 (> 10): explained by the other features (R² = 0.941)

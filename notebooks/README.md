@@ -26,7 +26,7 @@ and uses the shared functions of `src/config.py` (`clean`, `map_labels`, `valida
 | `06_merge_netflow.ipynb` | Ahmed Hamouda | 3 | stack the 4 NetFlow files, after-merge decisions → `netflow_merged.parquet` |
 | `07_eda_netflow.ipynb` | Ahmed Hamouda | 4 | EDA of the merged NetFlow data: statistics, plots, correlation, Mann–Whitney U, Kolmogorov–Smirnov |
 | `07_eda_iot23.ipynb` | Yassine Mtibaa | 4 | EDA of CICIoT2023: statistics, correlation, normality, chi-square, comparison with NetFlow |
-| `08_features_netflow.ipynb` | Ahmed Hamouda | 5 | feature engineering of the merged NetFlow data → `netflow_features.parquet` (59 features) |
+| `08_features_netflow.ipynb` | Ahmed Hamouda | 5 | feature engineering of the merged NetFlow data → `netflow_features.parquet` (44 features) |
 | `08_features_iot23.ipynb` | Yassine Mtibaa | 5 | feature engineering of CICIoT2023 |
 
 ## Run order (to rebuild the data)
